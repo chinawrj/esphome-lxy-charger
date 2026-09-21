@@ -14,6 +14,8 @@ ESPHome 2026.9.0 / ESP-IDF 5.5.5.
 
 See [test-matrix.json](test-matrix.json) for the matrix results. The bit order is LCD, Button, LED, Web; BLE and the event bus are always present. Matrix tests use example credentials and do not upload firmware.
 
+Independent Linux CI also passed **18/18 jobs** for code commit `d95569441e9371ad8649ee7e20e29b116d0fda17`: native tests and YAML validation, all sixteen firmware combinations, and ATOMS3U compilation. [GitHub Actions run 35574823068](https://github.com/chinawrj/esphome-lxy-charger/actions/runs/35574823068). Subsequent verification-document changes do not alter that tested code.
+
 ## Physical M5StickC Plus 1.1
 
 The final headless + Web profile and the complete LCD/Button/LED/Web profile were each uploaded and tested against a compatible charger with its charging output disabled by the operator. Both completed the same 15-step Web exercise:
