@@ -1,12 +1,25 @@
 # Verification record
 
+## Power-focused meter and expanded setpoint ranges — 2026-09-21
+
+Code commit `77fe8c4` includes the power-focused layout (`80e84fc`) and requested setting ranges: **50.0–93.0 V / 1.0–10.0 A**, in 0.1 steps. Voltage follows the operator-reported 50–93 V nameplate. Current follows the operator's explicit 1–10 A request; the reported nameplate says 3–10 A. Acceptance below 3 A has not been physically tested.
+
+- Native real-BLE fake-transport tests passed for all **431 voltage steps and 91 current steps**, including single-send payload bytes, matching echo, independent readback, and rejected nonfinite/off-step/out-of-bounds requests. This is not a claim of testing every V/A pair or electrically operating the charger throughout these ranges.
+- Web staging tests cover those same steps without automatic Apply. Real button/controller tests cover both voltage and current endpoints, stopping at bounds, a separate confirmation gesture, unchanged companion setpoints and rejection of invalid baselines. Existing transaction, wake and telemetry regressions passed.
+- The meter gives power **76 px** type, with **28 px V/A on one footer row**; longer power strings shrink. All twelve shared-view-model render scenes passed text bounds and glyph checks. Meter previews are synthetic/layout evidence, not physical LCD photographs. The 15-second idle entry and consumed wake gesture are unchanged.
+- All **16/16 module combinations** passed YAML validation, full ESP-IDF compilation and exact source-copy/compiled-component checks. [Current matrix](test-matrix.json): `voltage-current-range-20260921T111823Z-f8dab5dbffd2`. Separate M5StickC Plus, ATOMS3U and generic ESP32 builds passed; ATOMS3U remains compile-only.
+- M5Stick OTA succeeded for the final 19:18:24 +0800 build (configuration hash `0x5648fe93`). Read-only device Web metadata confirms voltage min/max/step **50.0/93.0/0.1**, current **1.0/10.0/0.1**, and `Connected (ready)`. Configuration readback remained **58.2 V / 5.1 A**. No setting command was sent for these updates.
+- Current telemetry remains deferred; power stays unavailable until both same-sample output channels are fresh and valid. Voltage remains provisional, marked `V*`. Expanded-range physical writes, new subjective layout acceptance and this revision's separate GitHub CI completion are not claimed here.
+
+---
+
 ## Idle V/A/W meter follow-up — 2026-09-21
 
 Code commit `b2b785b` adds a 15-second home-page inactivity transition to a dedicated V/A/W meter. The first press wakes home and consumes the entire gesture; no BLE request or editing action accompanies wake. Button drives `UI_STATE`; LCD reads the event snapshot. The earlier 10% LED duty adjustment is retained.
 
 - Native real-controller/wrapper tests passed for the exact idle boundary, wake on short/long/combined presses, next separate button action, editing isolation, absent LCD, heartbeat loss, and timer/sequence rollover. Existing transaction and button safety regressions also passed.
 - The real reducer/view tests passed for same-sample `V × A`, separation from setpoints, voltage-only data, real zero values, stale data and disconnection. Missing current always leaves power unavailable. Event-core, BLE and all 32 Web-entity tests also passed.
-- All **16/16 module combinations** passed YAML validation, full ESP-IDF builds and exact source-copy/compiled-component checks. [Current matrix](test-matrix.json): `idle-meter-20260921T105257Z-5f4b4679a5aa`. This report supersedes the historical matrices below.
+- All **16/16 module combinations** passed YAML validation, full ESP-IDF builds and exact source-copy/compiled-component checks. [Archived idle-meter matrix](https://github.com/chinawrj/esphome-lxy-charger/blob/8a984d5/docs/test-matrix.json): `idle-meter-20260921T105257Z-5f4b4679a5aa`. This report supersedes the historical matrices below.
 - The full M5StickC Plus 1.1 build passed and was installed by successful OTA, configuration hash `0xe79fa07d`. Read-only post-OTA checks reported `Connected (ready)`. No charger-setting write was sent for this update.
 - Eleven shared-view-model layout scenes passed text bounds and glyph checks, including voltage-only, synthetic V/A/W and stale meter pages. These are previews, not hardware photos. Physical idle/wake behavior and subjective legibility have been requested from the operator but are not yet independently confirmed.
 - Voltage is still provisional, marked `V*` on the meter; current decoding remains deferred. The local test results above do not claim completion of this revision's separate GitHub Actions run.
