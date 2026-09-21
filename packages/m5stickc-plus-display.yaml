@@ -64,6 +64,14 @@ font:
     id: m5stick_font_value
     size: 40
     glyphs: ' -.0123456789AV'
+  - file: assets/Roboto.ttf
+    id: m5stick_font_hero
+    size: 56
+    glyphs: ' -.0123456789'
+  - file: assets/Roboto.ttf
+    id: m5stick_font_power
+    size: 28
+    glyphs: ' *-.0123456789AVW'
 
 charger_display:
 
@@ -103,7 +111,8 @@ display:
       it.fill(Color::BLACK);
       for (size_t i = 0; i < view.count; ++i) {
         const auto &label = view.labels[i];
-        auto *font = label.font == Font::LARGE ? id(m5stick_font_value) :
+        auto *font = label.font == Font::HERO ? id(m5stick_font_hero) :
+            label.font == Font::POWER ? id(m5stick_font_power) : label.font == Font::LARGE ? id(m5stick_font_value) :
             (label.font == Font::MEDIUM ? id(m5stick_font_title) : id(m5stick_font_small));
         const Color ink = label.ink == Ink::WHITE ? Color(255, 255, 255) :
             (label.ink == Ink::GREEN ? Color(64, 230, 140) :

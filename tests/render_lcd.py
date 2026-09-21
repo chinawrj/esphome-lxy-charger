@@ -33,7 +33,7 @@ def main():
     missing = {c for c in labels if ord(c) > 127} - declared
     if missing:
         raise RuntimeError(f'UI font inventory missing characters: {sorted(missing)}')
-    fonts = [ImageFont.truetype(str(ROOT / 'assets/ChargerSansSC.ttf'), n) for n in (12, 14)] + [ImageFont.truetype(str(ROOT / 'assets/Roboto.ttf'), 40)]
+    fonts = [ImageFont.truetype(str(ROOT / 'assets/ChargerSansSC.ttf'), n) for n in (12, 14)] + [ImageFont.truetype(str(ROOT / 'assets/Roboto.ttf'), n) for n in (40, 56, 28)]
     colors = [(255, 255, 255), (160, 160, 160), (64, 230, 140), (255, 185, 64)]
     names = []
     args.output.mkdir(parents=True, exist_ok=True)

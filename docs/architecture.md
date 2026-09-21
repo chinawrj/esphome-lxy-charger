@@ -101,7 +101,7 @@ flowchart LR
 
 ### 本地界面的类型与时间
 
-`UiMode` 分开表示 `VIEW`、`EDIT`、`CONFIRM`、`SUBMITTING`、`REFRESHING`、`CONNECTING`、`HELP`。刷新和连接不会显示成正在提交草稿。`UiNotice` 区分 `APPLIED`、`REFRESHED`、`CONNECTED`、`CONNECT_FAILED`，以及取消、限幅、未就绪、忙、配置变化、超时和结果未知等反馈。按钮只用自己的 pending 请求 ID 与种类解释 `STATUS`，后台自动读回不会被当成本地操作成功。
+`UiMode` 分开表示 `VIEW`、`EDIT`、`CONFIRM`、`SUBMITTING`、`REFRESHING`、`CONNECTING`、`HELP`、`METER`。刷新和连接不会显示成正在提交草稿。`UiNotice` 区分 `APPLIED`、`REFRESHED`、`CONNECTED`、`CONNECT_FAILED`，以及取消、限幅、未就绪、忙、配置变化、超时和结果未知等反馈。按钮只用自己的 pending 请求 ID 与种类解释 `STATUS`，后台自动读回不会被当成本地操作成功。
 
 `UiHold` 是“松开后执行”的提示。达到 800 ms 只更新提示，不发送请求；有效长按在 800–5000 ms 松开时执行。超过 5 秒显示 `RELEASE`，松开不执行。帮助页、等待期间和中途作废的手势不能附带产生一次连接、刷新或设置。
 
@@ -163,3 +163,8 @@ A 短按选择、长按进入编辑；编辑时 A/B 减/加 0.1，A 长按进入
 编辑无操作 30 秒、配置基线变化、失联、外部事务忙或显示失效会取消未提交草稿；双键和丢边沿也会抑制整个手势。`buttons_gpio` 的 `INPUT.request_id` 专用于共享的 uint32 GPIO 边沿序号，支持回绕，不作为 BLE 请求 ID。已提交请求只跟踪结果，不自动重发。
 
 板载 LED 是固定红色，只表示连接：实际 `connected=true` 优先常亮；否则 `connection_enabled=true` 时 500 ms 亮/500 ms 灭；两者均 false 时熄灭。GATT 初始化、事务、错误和未解码测量都不改变已连接时的常亮，不使用事务闪码。实现只读取连接快照、非阻塞计算电平；详见 [LED 组件](../components/charger_indicator/README.md)。LCD、按键与 LED 均不依赖 Web/Wi-Fi。
+
+
+### 待机仪表事件
+
+Button 在 VIEW 页无输入边沿 15 秒、LCD 心跳可用且没有请求或按键占用时，发布 `UI_STATE` 切换到 `METER`。LCD 只读取快照渲染 V/A/W，不引用 Button 对象。第一次按键立即返回 VIEW 并消费整个手势，避免唤醒兼作编辑或提交。只有 LCD 的组合保留 VIEW；没有 LCD 的组合不进入仪表页。功率仅取同一份有效、未过期的实时 V/A 样本相乘；单电压解码时电流与功率均未知。

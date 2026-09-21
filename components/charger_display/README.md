@@ -77,3 +77,16 @@ photos; font rasterization may differ by a pixel. `tests/test_telemetry_view.py`
 checks the real reducer and view; `tests/test_local_controls.py` checks hold,
 request-correlation and cancellation behavior. Neither replaces a physical panel
 and button check.
+
+## Dedicated idle meter
+
+`UI_STATE.ui_mode=METER` selects a six-label page: voltage/current in 56 px
+Roboto, power and V/A/W units in 28 px. No setpoints or operation/status rows are
+shown. An amber `V*` retains the inferred-voltage marker. The normal page gives
+the full explanation. Power is computed only from finite, declared voltage and
+current channels in the same fresh sample. Voltage-only, missing, invalid,
+stale and disconnected samples cannot produce a numeric watt reading.
+
+Only Button owns inactivity/wake state; the renderer has no timer side effects
+and sends no BLE requests. Dedicated previews cover voltage-only, synthetic
+both-channel, and stale data. These are layout renders, not hardware photos.

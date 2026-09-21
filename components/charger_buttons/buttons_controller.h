@@ -12,6 +12,8 @@ class ButtonsController {
   using Request = std::function<uint32_t(EventType, float, float)>;
   void set_requester(Request request) { request_ = std::move(request); }
   void edge(bool button_a, bool down, uint32_t sequence, uint32_t now, const Snapshot &state) {
+    last_activity_ = now;
+    activity_seen_ = true;
     if (sequence_seen_ && sequence != last_sequence_ + 1) {
       held_a_ = held_b_ = chord_ = false;
       set_hold_(UiHold::NONE);
@@ -28,6 +30,12 @@ class ButtonsController {
       if (held) { chord_ = true; return; }
       held = true;
       started = now;
+      if (mode_ == UiMode::METER) {
+        mode_ = UiMode::VIEW;
+        chord_ = true;  // Consume the entire wake gesture, including a long hold/chord.
+        feedback_(UiNotice::NONE, "Meter closed");
+        return;
+      }
       if (pending_id_) chord_ = true;  // Completion during this hold must not reinterpret it on View.
       if (held_a_ && held_b_) {
         chord_ = true;
@@ -50,6 +58,7 @@ class ButtonsController {
   }
 
   void tick(uint32_t now, const Snapshot &state) {
+    const bool was_home = mode_ == UiMode::VIEW;
     if (mode_ == UiMode::HELP) {
       if (!display_alive_(state, now))
         cancel_(UiNotice::DISPLAY_UNAVAILABLE, "Display unavailable; help closed", Result::INFO);
@@ -65,6 +74,16 @@ class ButtonsController {
         cancel_(UiNotice::CONFIG_CHANGED, "Readback changed; edit cancelled", Result::REJECTED);
       else if (now - last_action_ >= 30000) cancel_(UiNotice::TIMED_OUT, "Edit timed out; nothing sent", Result::INFO);
     }
+    if (mode_ == UiMode::METER && !display_alive_(state, now))
+      cancel_(UiNotice::DISPLAY_UNAVAILABLE, "Display unavailable; meter closed", Result::INFO);
+    if (!activity_seen_ || !was_home || mode_ != UiMode::VIEW || held_a_ || held_b_ ||
+        state.busy || !display_alive_(state, now)) {
+      last_activity_ = now;
+      activity_seen_ = true;
+    } else if (uint32_t(now - last_activity_) >= 15000) {
+      mode_ = UiMode::METER;
+      feedback_(UiNotice::NONE, "Idle meter");
+    }
     update_hold_(now, state);
   }
 
@@ -77,6 +96,7 @@ class ButtonsController {
         event.result != Result::INFO && event.result != Result::ACCEPTED) {
       pending_id_ = 0;
       mode_ = UiMode::VIEW;
+      last_activity_ = now;
       const UiNotice notice = pending_kind_ == RequestKind::CONNECT ?
           (event.result == Result::VERIFIED ? UiNotice::CONNECTED : UiNotice::CONNECT_FAILED) :
           event.result == Result::VERIFIED ?
@@ -239,6 +259,8 @@ class ButtonsController {
   uint32_t last_action_{0}, started_a_{0}, started_b_{0}, last_sequence_{0};
   uint32_t pending_id_{0}, last_request_id_{0};
   RequestKind pending_kind_{RequestKind::READ};
+  uint32_t last_activity_{0};
+  bool activity_seen_{false};
   uint32_t display_seen_at_{0};
   bool display_seen_{false};
   bool held_a_{false}, held_b_{false}, chord_{false}, sequence_seen_{false}, changed_{true};

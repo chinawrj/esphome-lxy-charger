@@ -64,3 +64,14 @@ an accidental long press. Real command request IDs still come from the bus.
 
 The portable controller and the actual ESPHome wrapper are covered by
 `python3 tests/test_local_controls.py` (add `--sdk PATH` on macOS if required).
+
+## Idle meter and wake gesture
+
+After 15 seconds without input edges in VIEW, the controller publishes
+`UI_STATE.ui_mode=METER` if the LCD heartbeat is available and no operation or
+button hold is active. LCD heartbeats and BLE telemetry do not count as button
+activity. A press wakes VIEW immediately; every edge of that hold/chord is
+consumed through release, including long presses. The next separate press uses
+normal home controls. Other pages and pending requests reset the home idle
+interval; time comparisons support uint32 rollover. No LCD means no meter;
+without this Button module the LCD remains on VIEW.

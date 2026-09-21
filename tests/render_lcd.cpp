@@ -23,6 +23,8 @@ int main() {
   state.telemetry_channels = 1; state.telemetry_inferred = true; state.sampled_at = 1000;
   state.output_voltage = 58.8f;
   emit("lcd-output-preview.png", state);
+  state.ui_mode = UiMode::METER;
+  emit("lcd-meter-preview.png", state);
   state.ui_mode = UiMode::EDIT;
   emit("lcd-edit-preview.png", state);
   state.ui_mode = UiMode::CONFIRM;
@@ -36,6 +38,10 @@ int main() {
   state.output_voltage = 53.8f;
   state.output_current = 4.9f;
   emit("lcd-live-simulation.png", state);
+  state.ui_mode = UiMode::METER;
+  emit("lcd-meter-simulation.png", state);
+  emit("lcd-meter-stale-preview.png", state, 8000);
+  state.ui_mode = UiMode::VIEW;
   emit("lcd-stale-simulation.png", state, 8000);
   state.connected = state.connection_enabled = state.ready = false;
   state.telemetry_valid = false;

@@ -395,7 +395,33 @@ void test_inferred_voltage_without_current() {
   assert(!bus.snapshot().telemetry_supported);
 }
 
+
+void test_meter_values_and_power() {
+  EventCore bus; connect(bus); capability(bus); configure(bus);
+  Event ui; ui.type = EventType::UI_STATE; ui.ui_mode = UiMode::METER; deliver(bus, ui);
+  deliver(bus, telemetry(52.7f, 3.2f, 1000));
+  auto view = make_view(bus.snapshot(), 1000);
+  assert(view.count == 6 && view.labels[0].font == Font::HERO);
+  assert(view.labels[0].text == "52.7" && view.labels[2].text == "3.2" && view.labels[4].text == "168.6");
+  assert(!contains(view, "58.4") && !contains(view, "BLE") && !contains(view, "设定"));
+  for (uint32_t time : {7000u, 7001u}) {
+    view = make_view(bus.snapshot(), time);
+    assert(view.labels[0].text == "--.-" && view.labels[2].text == "--.-" && view.labels[4].text == "--.-");
+  }
+  Event cap; cap.type = EventType::TELEMETRY_CAPABILITY; cap.telemetry_supported = true;
+  cap.telemetry_channels = 1; cap.telemetry_inferred = true; deliver(bus, cap);
+  deliver(bus, telemetry(58.9f, 99.0f, 8000));
+  view = make_view(bus.snapshot(), 8000);
+  assert(view.labels[0].text == "58.9" && view.labels[1].text == "V*");
+  assert(view.labels[2].text == "--.-" && view.labels[4].text == "--.-");
+  connect(bus, false); view = make_view(bus.snapshot(), 8001);
+  assert(view.labels[0].text == "--.-" && view.labels[4].text == "--.-");
+  connect(bus); capability(bus); deliver(bus, telemetry(0.0f, 0.0f, 9000));
+  view = make_view(bus.snapshot(), 9000); assert(view.labels[4].text == "0.0");
+}
+
 int main() {
+  test_meter_values_and_power();
   test_inferred_voltage_without_current();
   test_config_and_requests_never_create_output();
   test_measurements_stay_separate_from_config();

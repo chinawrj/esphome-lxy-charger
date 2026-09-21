@@ -86,6 +86,42 @@ struct Wrapper {
 };
 
 int main() {
+
+  { // Only idle HOME enters the meter; display heartbeats/telemetry do not reset idle.
+    Pure f;
+    f.now = 14999; f.heartbeat(); assert(f.mode() == UiMode::VIEW);
+    f.now = 15000; f.heartbeat(); assert(f.mode() == UiMode::METER);
+    f.press(false, true);  // Wake with long B must not open Help or refresh.
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+    f.now += 14999; f.heartbeat(); assert(f.mode() == UiMode::METER);
+    f.press(true, true);  // Wake with long A must not edit.
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+    f.press(true, true); assert(f.mode() == UiMode::EDIT);
+    f.now += 16000; f.heartbeat(); assert(f.mode() == UiMode::EDIT);
+  }
+  { // Every edge resets idle; a held or simultaneous wake cannot become a command.
+    Pure f; f.now = 15000; f.heartbeat();
+    f.edge(true, true); f.edge(false, true); f.now += 1000; f.heartbeat();
+    f.edge(true, false); f.edge(false, false);
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+    f.now += 14999; f.heartbeat(); assert(f.mode() == UiMode::VIEW);
+    f.now += 1; f.heartbeat(); assert(f.mode() == UiMode::METER);
+  }
+  { // Idle timeout is safe across millis rollover and absent LCD.
+    Pure f; f.now = UINT32_MAX - 1000; f.edge(true, true); f.edge(true, false);
+    f.now += 14999; f.heartbeat(); assert(f.mode() == UiMode::VIEW);
+    f.now += 1; f.heartbeat(); assert(f.mode() == UiMode::METER);
+    f.heartbeat(false); assert(f.mode() == UiMode::VIEW);
+    f.now += 60000; f.controller.tick(f.now, f.state); assert(f.mode() == UiMode::VIEW);
+  }
+  { // Wrapper publishes meter state through the bus and consumes the wake input.
+    Wrapper f; f.ready(); f.heartbeat();
+    fake_millis = 15000; f.heartbeat(); f.buttons.loop(); f.drain();
+    assert(f.bus.snapshot().ui_mode == UiMode::METER);
+    f.press(false); assert(f.bus.snapshot().ui_mode == UiMode::VIEW && f.requests.empty());
+    f.press(false); assert(f.requests.size() == 1 && f.requests[0].type == EventType::REQUEST_READ_CONFIG);
+  }
+
   { // Independent holds: entering/reviewing a draft performs no BLE operation.
     Pure f; f.confirmation();
     f.press(true, true);
@@ -228,8 +264,10 @@ int main() {
     assert(f.mode() == UiMode::VIEW && f.requests.empty());
   }
   { // uint32 time/sequence wrap and publication rejection remain safe.
-    Pure f; f.sequence = 0xfffffffeu; f.now = 0xffffff00u; f.heartbeat();
-    f.press(true, true); assert(f.mode() == UiMode::EDIT);
+    Pure f; f.sequence = 0xfffffffeu; f.now = 0xffffff00u;
+    // Start with an input edge so the artificial 49-day jump is not an idle period.
+    f.edge(true, true); f.heartbeat(); f.now += 800; f.heartbeat(); f.edge(true, false);
+    assert(f.mode() == UiMode::EDIT);
     f.press(true); f.press(true, true); f.accept = false; f.press(true, true);
     assert(f.mode() == UiMode::VIEW && f.requests.empty());
   }

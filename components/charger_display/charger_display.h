@@ -8,7 +8,7 @@
 namespace esphome::charger_display {
 // Shared by the hardware renderer and documented previews. Application input
 // comes only from typed events, never from another optional module's objects.
-enum class Font { SMALL, MEDIUM, LARGE };
+enum class Font { SMALL, MEDIUM, LARGE, HERO, POWER };
 enum class Ink { WHITE, MUTED, GREEN, AMBER };
 struct Label {
   int x{0}, y{0};
@@ -99,6 +99,22 @@ inline const char *output_reason(const charger_event_bus::Snapshot &state, uint3
 inline View make_view(const charger_event_bus::Snapshot &state, uint32_t now) {
   using namespace charger_event_bus;
   View view;
+  if (state.ui_mode == UiMode::METER) {
+    const bool fresh = state.telemetry_fresh(now);
+    const float voltage = fresh && (state.telemetry_channels & 1) ? state.output_voltage : NAN;
+    const float current = fresh && (state.telemetry_channels & 2) ? state.output_current : NAN;
+    // Both measurements must belong to the same accepted, fresh telemetry event.
+    // Setpoints never participate, and an unavailable current never becomes zero watts.
+    const float power = std::isfinite(voltage) && std::isfinite(current) ? voltage * current : NAN;
+    view.add(192, -9, Font::HERO, std::isfinite(voltage) ? Ink::WHITE : Ink::MUTED, number(voltage), true);
+    view.add(232, 16, Font::POWER, state.telemetry_inferred ? Ink::AMBER : Ink::MUTED,
+        state.telemetry_inferred ? "V*" : "V", true);
+    view.add(192, 41, Font::HERO, std::isfinite(current) ? Ink::WHITE : Ink::MUTED, number(current), true);
+    view.add(232, 66, Font::POWER, Ink::MUTED, "A", true);
+    view.add(192, 99, Font::POWER, std::isfinite(power) ? Ink::WHITE : Ink::MUTED, number(power), true);
+    view.add(232, 99, Font::POWER, Ink::MUTED, "W", true);
+    return view;
+  }
   const char *link = state.connected ? "BLE 已连接" :
       (state.connection_enabled ? "BLE 连接中" : "BLE 已断开");
   const Ink link_ink = state.connected ? Ink::GREEN : Ink::AMBER;
