@@ -28,7 +28,29 @@ void ChargerWeb::setup() {
 
 void ChargerWeb::loop() {
   if (bus_ == nullptr) return;
-  if (output_published_valid_ && !bus_->snapshot().telemetry_fresh(millis())) {
+  const auto &state = bus_->snapshot();
+  const char *link = state.connected ? (state.ready ? "Connected (ready)" : "Connected (initializing)") :
+      (state.connection_enabled ? "Connecting" : "Disconnected / disabled");
+  if (link_status_sensor_ && published_link_status_ != link) {
+    published_link_status_ = link;
+    link_status_sensor_->publish_state(published_link_status_);
+  }
+  const char *output = "Waiting for BLE connection";
+  using charger_event_bus::OutputState;
+  switch (state.output_state(millis())) {
+    case OutputState::INITIALIZING: output = "BLE connected; initializing"; break;
+    case OutputState::UNSUPPORTED: output = "BLE connected; output decoding not implemented"; break;
+    case OutputState::WAITING: output = "Waiting for first output sample"; break;
+    case OutputState::LIVE: output = "Live measured output"; break;
+    case OutputState::STALE: output = "Output sample expired"; break;
+    case OutputState::INVALID: output = "Invalid output sample"; break;
+    default: break;
+  }
+  if (output_status_sensor_ && published_output_status_ != output) {
+    published_output_status_ = output;
+    output_status_sensor_->publish_state(published_output_status_);
+  }
+  if (output_published_valid_ && !state.telemetry_fresh(millis())) {
     output_published_valid_ = false;
     if (output_voltage_sensor_) output_voltage_sensor_->publish_state(NAN);
     if (output_current_sensor_) output_current_sensor_->publish_state(NAN);

@@ -11,6 +11,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 from PIL import Image, ImageDraw, ImageFont
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,14 +28,20 @@ def main():
             command += ['-isysroot', args.sdk]
         subprocess.run(command + [str(ROOT / 'tests/render_lcd.cpp'), '-o', binary], check=True)
         lines = subprocess.check_output([binary], text=True).splitlines()
-    fonts = [ImageFont.truetype(str(ROOT / 'assets/Roboto.ttf'), n) for n in (11, 14, 40)]
+    declared = set(yaml.safe_load((ROOT / 'assets/ui-glyphs.yaml').read_text()))
+    labels = (ROOT / 'components/charger_display/charger_display.h').read_text()
+    missing = {c for c in labels if ord(c) > 127} - declared
+    if missing:
+        raise RuntimeError(f'UI font inventory missing characters: {sorted(missing)}')
+    fonts = [ImageFont.truetype(str(ROOT / 'assets/ChargerSansSC.ttf'), n) for n in (12, 14)] + [ImageFont.truetype(str(ROOT / 'assets/Roboto.ttf'), 40)]
     colors = [(255, 255, 255), (160, 160, 160), (64, 230, 140), (255, 185, 64)]
-    names = ['lcd-output-preview.png', 'lcd-edit-preview.png', 'lcd-confirm-preview.png']
+    names = []
     args.output.mkdir(parents=True, exist_ok=True)
     pages = []
     for line in lines:
         parts = line.split('\t')
         if parts[0] == 'PAGE':
+            names.append(parts[1])
             pages.append(Image.new('RGB', (240, 135), 'black'))
             continue
         x, y, font, ink, right = map(int, parts[:5])

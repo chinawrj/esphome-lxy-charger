@@ -1,7 +1,8 @@
 # Optional LED module for original M5StickC Plus (not Plus2).
 # Official schematic: LED2 anode=VESP_3V3, cathode=GPIO10, so LOW is on.
 # https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/669/k016-p-StickC-Plus-sche.pdf
-# Application inputs are event-bus snapshots and results; no other module IDs.
+# Fixed red LED: steady=actual BLE link, slow blink=connecting, off=disabled.
+# Reads only event-bus connection snapshots; no other module IDs or result codes.
 output:
   - platform: gpio
     id: m5stick_connection_led

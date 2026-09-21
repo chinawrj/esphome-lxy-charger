@@ -4,15 +4,15 @@
 
 ```mermaid
 flowchart LR
-    Button["Button · 可选"] -->|读取 / Apply / INPUT / UI_STATE| Bus["事件队列 + 状态快照 · 必选"]
+    Button["Button · 可选"] -->|连接 / 读取 / Apply / INPUT / UI_STATE| Bus["事件队列 + 状态快照 · 必选"]
     Web["Web · 可选"] -->|连接 / 查询 / Apply / 网络状态| Bus
     Bus -->|REQUEST_*| BLE["BLE 服务 · 必选"]
-    BLE -->|CONNECTION / CONFIG / STATUS / RAW_STATUS| Bus
+    BLE -->|连接 / 配置 / 事务 / 原始帧 / 测量能力| Bus
     BLE <-->|GATT| Charger["LXY BLE charger"]
     Bus -->|事件| Web
     Bus -->|快照| LCD["LCD · 可选"]
     LCD -->|UI_DISPLAY 心跳| Bus
-    Bus -->|事务事件 + 快照| LED["LED · 可选"]
+    Bus -->|连接快照| LED["LED · 可选"]
 ```
 
 ## 组件职责
@@ -25,7 +25,7 @@ flowchart LR
 | Web YAML | Wi-Fi、网页资源、配网、网络地址事件 | 可选 Web 模块 |
 | `charger_display` + LCD YAML | 纯 C++ 布局、AXP192、SPI、ST7789、字体、显示心跳 | bus.snapshot()/publish() + 自身硬件 |
 | `charger_buttons` + Button YAML | GPIO37/39、去抖边沿、草稿/确认状态机 | bus.request()/publish() + 自身硬件 |
-| `charger_indicator` + LED YAML | GPIO10 active-low 非阻塞闪烁 | bus 的结果事件和归一化快照 |
+| `charger_indicator` + LED YAML | GPIO10 active-low 连接指示灯 | bus 的 `connected/connection_enabled` 快照 |
 
 硬件初始化只发生在所属包被包含时。LCD 的 AXP192 操作只设置屏幕 LDO 电压和使能位，保留其他电源及电池充电寄存器。删除 LCD 包也删除字体和显示驱动依赖。原始 M5StickC Plus 的引脚、电源和面板参数来自 [M5Stack 官方说明](https://docs.m5stack.com/en/core/m5stickc_plus)、[AXP192 初始化源码](https://github.com/m5stack/M5StickC-Plus/blob/master/src/AXP192.cpp)及 [M5GFX 面板配置](https://github.com/m5stack/M5GFX/blob/master/src/M5GFX.cpp)。
 
@@ -38,7 +38,7 @@ flowchart LR
 - [`axp192.c`](https://github.com/chinawrj/m5stickplus1.1/blob/main/main/axp192.c) 分开管理显示逻辑和背光。本项目保持最小屏幕初始化；两路使用 M5Stack 原始 Plus 初始化的 3.0 V，不启用参考项目中的其他外设电源。
 - 安装顺序沿用确认串口、烧录、115200 波特率查看日志；具体命令使用 ESPHome CLI。该参考项目的原生 `idf.py` 构建和 1.5 MB 应用分区不直接套用于本工程。
 
-这里只参考板级模式，没有引入其 LVGL/ESP-NOW 业务代码；本工程的模块通信仍全部经过事件总线。
+这里只参考板级模式，没有引入其 LVGL/ESP-NOW 业务代码。本项目使用 ESPHome `mipi_spi` 与纯 C++ 标签布局，不使用 LVGL；模块通信全部经过事件总线。
 
 ## 事件与数据
 
@@ -46,20 +46,21 @@ flowchart LR
 
 | 事件 | 典型生产者 | 消费方与效果 |
 |---|---|---|
-| `REQUEST_CONNECT` | Web / 新增控制适配器 | BLE 启用连接 |
+| `REQUEST_CONNECT` | Web、离线 Button B | BLE 启用连接 |
 | `REQUEST_DISCONNECT` | Web / 新增控制适配器 | BLE 禁用连接；不是关闭充电输出 |
 | `REQUEST_READ_CONFIG` | Web、Button B | BLE 发起只读查询 |
 | `REQUEST_APPLY_CONFIG` | Web、Button 确认 | BLE 验证并提交事件中的两项设定值 |
-| `CONNECTION` | BLE | 更新连接、就绪、忙碌状态；未就绪时使设定值失效 |
+| `CONNECTION` | BLE | 分别更新连接启用、实际连接、协议就绪与忙碌；未就绪时使设定值失效 |
 | `CONFIG` | BLE | 更新设定值；不会自行把连接标成就绪 |
 | `STATUS` | BLE | 更新请求状态、结果与忙碌标记 |
 | `RAW_STATUS` | BLE | 保留尚未解码的原始状态帧；不推断测量值 |
-| `INPUT` | Button GPIO、Web | 输入动作或草稿反馈；不覆盖 BLE 事务忙碌状态，也不触发设置 |
+| `INPUT` | Button GPIO、Web | 输入动作或草稿反馈；不覆盖 BLE 事务忙碌状态，本身不直接写设备 |
 | `NETWORK_STATE` | 可选网络模块 | 更新或清空 IP 地址 |
-| `TELEMETRY` | 经验证的测量适配器 | 独立的 `output_voltage/current`、`sampled_at`、`telemetry_valid`；不改配置 |
+| `TELEMETRY_CAPABILITY` | BLE / 经验证的测量适配器 | 显式声明 `telemetry_supported`；关闭能力时清除测量值 |
+| `TELEMETRY` | 经验证的测量适配器 | 只有已连接且声明支持时才接受有效、有限的 `output_voltage/current`；不改配置 |
 | `UI_DISPLAY` | LCD | 每次绘制发布可用性；Button 在 3 秒无心跳后禁止编辑/提交 |
 | `UI_CONTROLS` | Button | 声明本地按键可用性；LCD-only 不提示不存在的按键 |
-| `UI_STATE` | Button | 选择、草稿、确认与提交态；不改 BLE ready/busy/配置或事务 ID |
+| `UI_STATE` | Button | 本地模式、草稿、typed notice/hold 与反馈时间；不改 BLE ready/busy/配置或事务 ID |
 
 `Event` 含类型、`request_id`、来源 `source`、连接状态、设定值、`Result` 和文本 `message`。`Snapshot` 保存公共状态；LCD 只读取这个快照。网络事件使用 `connected` 表示网络可用，`message` 承载地址；无网络模块时 `ip_address` 为空。
 
@@ -75,6 +76,36 @@ flowchart LR
 | `REJECTED` | 未满足就绪、空闲或参数要求，请求被拒绝 |
 | `FAILED` | 查询或确认失败，包括明确回读不匹配 |
 | `UNKNOWN` | 请求可能已经到达设备，但无法确认最终结果 |
+
+### 连接、配置与测量是独立状态
+
+`connection_enabled` 表示本机 BLE client 是否启用了连接；`connected` 表示实际链路是否存在。自动连接启用但尚未连上时，两者分别为 true/false。`ready` 表示 GATT 通知可用且已完成配置回读；`busy` 表示前台事务正在处理。连接成功、协议就绪和读到实时测量不能互相替代。
+
+`voltage/current` 始终是配置设定值。实际输出使用独立的 `output_voltage/output_current`。`TELEMETRY_CAPABILITY` 必须先声明支持，随后有效的 `TELEMETRY` 才能提供测量；声明能力本身不生成样本，也不刷新样本时间。关闭能力或断连会清空有效测量，重新连接不会恢复旧样本。原始 `84` 回包只更新 `RAW_STATUS` 和其接收时间，不能绕过能力门槛。
+
+**当前 `84` 的实时电压、电流解码仍未实现。** BLE 启动时明确发布 `telemetry_supported=false`。正常连接并读回设定值后，输出区域应说明“未解码”，数值为 `--.-`；Web 的测量实体为 `NaN`。不能用设定值代替输出，也不能因为设备空载就推断为 0 V / 0 A。
+
+`snapshot.output_state(now)` 按下列顺序分类。这是测量数据的可用性，不是充电输出开关状态：
+
+| `OutputState` | 判定条件 |
+|---|---|
+| `DISCONNECTED` | 实际 BLE 链路未连接 |
+| `LIVE` | 已声明支持，当前样本有效且年龄小于 6000 ms |
+| `INITIALIZING` | 无有效新样本，协议尚未就绪 |
+| `UNSUPPORTED` | 协议已就绪，但未声明测量解码支持 |
+| `WAITING` | 支持测量，但当前连接尚未收到首个样本 |
+| `STALE` | 已收到有效样本，但年龄达到或超过 6000 ms |
+| `INVALID` | 已收到样本，但它被标记无效或数值不是有限数 |
+
+消费者统一使用 `output_state(now)` 或 `telemetry_fresh(now)`，不能只检查缓存数值。时间为本次启动的毫秒计数，使用无符号减法处理计数回绕。
+
+### 本地界面的类型与时间
+
+`UiMode` 分开表示 `VIEW`、`EDIT`、`CONFIRM`、`SUBMITTING`、`REFRESHING`、`CONNECTING`、`HELP`。刷新和连接不会显示成正在提交草稿。`UiNotice` 区分 `APPLIED`、`REFRESHED`、`CONNECTED`、`CONNECT_FAILED`，以及取消、限幅、未就绪、忙、配置变化、超时和结果未知等反馈。按钮只用自己的 pending 请求 ID 与种类解释 `STATUS`，后台自动读回不会被当成本地操作成功。
+
+`UiHold` 是“松开后执行”的提示。达到 800 ms 只更新提示，不发送请求；有效长按在 800–5000 ms 松开时执行。超过 5 秒显示 `RELEASE`，松开不执行。帮助页、等待期间和中途作废的手势不能附带产生一次连接、刷新或设置。
+
+Button 仅在本地 UI 改变时发布 `UI_STATE.sampled_at`，总线将它保存为 `ui_updated_at`。后台 `STATUS` 和 LCD 心跳本身不续期本地反馈。当前正常页的普通反馈显示 3 秒；`FAILED`、`UNKNOWN`、`CONNECT_FAILED` 显示 6 秒。快照仍保留最后的 notice；提示何时隐去由显示层决定，连接/刷新/忙状态可以优先显示。
 
 ## 队列与生命周期
 
@@ -123,8 +154,12 @@ if (id == 0) {
 
 ## LCD、按钮与 LED 的独立性
 
-正常页大字只读取 `output_voltage/output_current`，小字 `Set` 只读取 `CONFIG` 的设定值。所有消费者必须使用 `snapshot.telemetry_fresh(millis())`：样本必须有效、已连接且年龄小于 6000 ms；否则显示 `--.-`，Web 发布 NaN。断连会清除实际读数，重新连接不会复活旧样本。当前协议字段是否经过实测确认，以协议与验证文档为准；增加事件接口不等于已经确认 `84` 的字段。
+正常页大字只读取受能力和时效检查保护的实际测量；小字“设定”只读取 `CONFIG`。没有有效测量时显示具体原因，例如初始化、未解码、等待首样本或过期，而不会把 `--.-` 暗示成 BLE 未连接。顶部链路文字直接使用 `connected/connection_enabled`。实时解码尚未实现，因此当前已就绪设备仍会显示“通信正常，输出数据尚未解码”。
 
-按钮只通过事件获知 LCD 存在，不引用 display ID。LCD 的 250 ms 绘制心跳与按钮的 3 秒失效检查，避免显示停止更新后仍提交不可见草稿。没有 LCD 时按钮保留只读刷新。A 短按选择、长按进入编辑；编辑时 A/B 减/加 0.1，A 长按进入确认，再次 A 长按才提交，B 取消。无操作 30 秒、配置基线变化、失联、外部事务忙或显示失效会取消未提交草稿。`buttons_gpio` 的 `INPUT.request_id` 专用于单调 GPIO 边沿序号，丢边沿即取消，不作为 BLE 请求 ID。
+按钮只通过事件获知 LCD 存在，不引用 display ID。LCD 的 250 ms 绘制回调根据电源初始化和组件状态发布 `UI_DISPLAY`；按钮按接收时间实施 3 秒心跳失效检查。没有 LCD 时仍可选择字段、连接和只读刷新，但不能编辑、提交或进入不可见的帮助页。
 
-LED 的纯控制器消费事务结果并根据毫秒时间计算亮灭，不阻塞主循环。断连、连接等待、就绪、忙碌、验证完成、拒绝和失败各有节奏；具体时序见 [LED 组件](../components/charger_indicator/README.md)。LCD、按键与 LED 均不依赖 Web/Wi-Fi。
+A 短按选择、长按进入编辑；编辑时 A/B 减/加 0.1，A 长按进入确认，再次 A 长按才提交，B 取消。两项草稿来自同一次配置快照。B 在浏览页短按时：就绪且空闲则刷新；已断开且连接未启用则只请求一次连接；连接已启用或正在初始化则提示等待。浏览页长 B 打开 `HELP`，其中短按 A 或 B 只返回并消费手势，长按无动作，30 秒无操作返回。
+
+编辑无操作 30 秒、配置基线变化、失联、外部事务忙或显示失效会取消未提交草稿；双键和丢边沿也会抑制整个手势。`buttons_gpio` 的 `INPUT.request_id` 专用于共享的 uint32 GPIO 边沿序号，支持回绕，不作为 BLE 请求 ID。已提交请求只跟踪结果，不自动重发。
+
+板载 LED 是固定红色，只表示连接：实际 `connected=true` 优先常亮；否则 `connection_enabled=true` 时 500 ms 亮/500 ms 灭；两者均 false 时熄灭。GATT 初始化、事务、错误和未解码测量都不改变已连接时的常亮，不使用事务闪码。实现只读取连接快照、非阻塞计算电平；详见 [LED 组件](../components/charger_indicator/README.md)。LCD、按键与 LED 均不依赖 Web/Wi-Fi。

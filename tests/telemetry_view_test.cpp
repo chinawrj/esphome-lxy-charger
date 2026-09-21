@@ -20,11 +20,19 @@ void deliver(EventCore &bus, const Event &event) {
   while (bus.pending()) assert(bus.dispatch() > 0);
 }
 
-void connect(EventCore &bus, bool connected = true, bool ready = true) {
+void connect(EventCore &bus, bool connected = true, bool ready = true, bool enabled = true) {
   Event event;
   event.type = EventType::CONNECTION;
   event.connected = connected;
+  event.connection_enabled = enabled;
   event.ready = ready;
+  deliver(bus, event);
+}
+
+void capability(EventCore &bus, bool supported = true) {
+  Event event;
+  event.type = EventType::TELEMETRY_CAPABILITY;
+  event.telemetry_supported = supported;
   deliver(bus, event);
 }
 
@@ -63,14 +71,18 @@ bool contains(const View &view, const std::string &text) {
 void assert_unknown_output(const Snapshot &snapshot, uint32_t now) {
   assert(!snapshot.telemetry_fresh(now));
   assert((large_values(make_view(snapshot, now)) == std::vector<std::string>{"--.-", "--.-"}));
-  assert(!contains(make_view(snapshot, now), "LIVE") || contains(make_view(snapshot, now), "NO LIVE DATA"));
+  assert(snapshot.output_state(now) != OutputState::LIVE);
 }
 
 void assert_same_ble(const Snapshot &before, const Snapshot &after) {
-  assert(after.connected == before.connected && after.ready == before.ready && after.busy == before.busy);
-  assert(after.voltage == before.voltage && after.current == before.current);
-  assert(after.output_voltage == before.output_voltage && after.output_current == before.output_current);
+  const auto same = [](float a, float b) { return a == b || (std::isnan(a) && std::isnan(b)); };
+  assert(after.connected == before.connected && after.connection_enabled == before.connection_enabled);
+  assert(after.ready == before.ready && after.busy == before.busy);
+  assert(same(after.voltage, before.voltage) && same(after.current, before.current));
+  assert(same(after.output_voltage, before.output_voltage) && same(after.output_current, before.output_current));
   assert(after.telemetry_valid == before.telemetry_valid && after.sampled_at == before.sampled_at);
+  assert(after.telemetry_supported == before.telemetry_supported && after.telemetry_seen == before.telemetry_seen);
+  assert(after.raw_status_seen == before.raw_status_seen && after.raw_sampled_at == before.raw_sampled_at);
   assert(after.status == before.status && after.result == before.result);
   assert(after.raw_status == before.raw_status && after.last_request_id == before.last_request_id);
 }
@@ -79,10 +91,11 @@ void test_config_and_requests_never_create_output() {
   EventCore bus;
   assert_unknown_output(bus.snapshot(), 0);
   connect(bus);
+  capability(bus);
   configure(bus);
   assert_unknown_output(bus.snapshot(), 1000);
   const View view = make_view(bus.snapshot(), 1000);
-  assert(contains(view, "Set 58.4 V") && contains(view, "Set 5.1 A"));
+  assert(contains(view, "58.4 V") && contains(view, "5.1 A"));
   assert(std::isnan(bus.snapshot().output_voltage) && std::isnan(bus.snapshot().output_current));
 
   assert(bus.request(EventType::REQUEST_APPLY_CONFIG, "test", 58.2f, 4.9f) != 0);
@@ -99,6 +112,7 @@ void test_config_and_requests_never_create_output() {
 void test_measurements_stay_separate_from_config() {
   EventCore bus;
   connect(bus);
+  capability(bus);
   configure(bus);
   // Synthetic physical values exercise the typed event contract, not any
   // unverified device-protocol offset or scaling assumption.
@@ -106,11 +120,11 @@ void test_measurements_stay_separate_from_config() {
   assert(bus.snapshot().telemetry_fresh(1000));
   auto view = make_view(bus.snapshot(), 1000);
   assert((large_values(view) == std::vector<std::string>{"52.7", "3.2"}));
-  assert(contains(view, "Set 58.4 V") && contains(view, "Set 5.1 A"));
+  assert(contains(view, "58.4 V") && contains(view, "5.1 A"));
   configure(bus, 58.2f, 4.9f);
   view = make_view(bus.snapshot(), 1100);
   assert((large_values(view) == std::vector<std::string>{"52.7", "3.2"}));
-  assert(contains(view, "Set 58.2 V") && contains(view, "Set 4.9 A"));
+  assert(contains(view, "58.2 V") && contains(view, "4.9 A"));
   configure(bus);
   assert_unknown_output(bus.snapshot(), 7000);  // Fresh config cannot extend telemetry life.
 
@@ -122,6 +136,7 @@ void test_measurements_stay_separate_from_config() {
 void test_freshness_boundary_and_wrap() {
   EventCore bus;
   connect(bus);
+  capability(bus);
   deliver(bus, telemetry(52.7f, 3.2f, 1000));
   assert(bus.snapshot().telemetry_fresh(6999));
   assert_unknown_output(bus.snapshot(), 7000);
@@ -141,6 +156,7 @@ void test_freshness_boundary_and_wrap() {
 void test_disconnect_and_late_reports() {
   EventCore bus;
   connect(bus);
+  capability(bus);
   configure(bus);
   deliver(bus, telemetry(52.7f, 3.2f, 1000));
   connect(bus, false, true);  // Contradictory ready bit must be normalized by the reducer.
@@ -152,6 +168,7 @@ void test_disconnect_and_late_reports() {
   assert_unknown_output(bus.snapshot(), 1003);
   assert(std::isnan(bus.snapshot().voltage) && std::isnan(bus.snapshot().current));
   connect(bus);
+  capability(bus);
   configure(bus);
   assert_unknown_output(bus.snapshot(), 1004);  // Reconnect/config cannot revive a prior sample.
   deliver(bus, telemetry(52.8f, 3.1f, 1005));
@@ -166,6 +183,7 @@ void test_invalid_telemetry_clears_both_values() {
                             telemetry(52.7f, 3.2f, 1001, false)}) {
     EventCore bus;
     connect(bus);
+  capability(bus);
     configure(bus);
     deliver(bus, telemetry(52.7f, 3.2f, 1000));
     assert(bus.snapshot().telemetry_fresh(1000));
@@ -179,6 +197,7 @@ void test_invalid_telemetry_clears_both_values() {
 void test_ui_events_cannot_change_ble_state() {
   EventCore bus;
   connect(bus);
+  capability(bus);
   configure(bus);
   deliver(bus, telemetry(52.7f, 3.2f, 1000));
   Event status;
@@ -208,16 +227,20 @@ void test_ui_events_cannot_change_ble_state() {
     event.ui_display_ready = true;
     event.ui_buttons_ready = true;
     event.ui_mode = UiMode::EDIT;
+    event.ui_notice = UiNotice::LIMIT;
+    event.ui_hold = UiHold::REVIEW;
     deliver(bus, event);
     assert_same_ble(original, bus.snapshot());
   }
   assert(bus.snapshot().ui_display_ready);
   assert(bus.snapshot().ui_buttons_ready);
   assert(bus.snapshot().ui_mode == UiMode::EDIT);
+  assert(bus.snapshot().ui_notice == UiNotice::LIMIT && bus.snapshot().ui_hold == UiHold::REVIEW);
+  assert(bus.snapshot().ui_updated_at == 2000 && bus.snapshot().ui_request_id == 987);
   assert(bus.snapshot().ui_voltage == 58.2f && bus.snapshot().ui_current == 4.9f);
   auto editing = make_view(bus.snapshot(), 1000);
-  assert(contains(editing, "SET VOLTAGE") && contains(editing, "SET CURRENT"));
-  assert(!contains(editing, "OUTPUT"));
+  assert((large_values(editing) == std::vector<std::string>{"58.2", "4.9"}));
+  assert(!contains(editing, "52.7") && !contains(editing, "3.2"));
   Event display_failure;
   display_failure.type = EventType::UI_DISPLAY;
   display_failure.ui_display_ready = false;
@@ -226,29 +249,113 @@ void test_ui_events_cannot_change_ble_state() {
   assert_same_ble(original, bus.snapshot());
 }
 
-void test_optional_controls_do_not_advertise_missing_buttons() {
+void test_optional_controls_change_hints_without_changing_data() {
   EventCore bus;
   connect(bus);
+  capability(bus);
   configure(bus);
-  auto view = make_view(bus.snapshot(), 1000);
-  assert(!contains(view, "A:") && !contains(view, "B:"));
-  assert(contains(view, "Set 58.4 V") && contains(view, "Set 5.1 A"));
+  const Snapshot original = bus.snapshot();
+  auto text = [](const View &view) {
+    std::string joined;
+    for (size_t i = 0; i < view.count; ++i) joined += view.labels[i].text + "\n";
+    return joined;
+  };
+  const auto no_buttons = text(make_view(bus.snapshot(), 1000));
   Event controls;
   controls.type = EventType::UI_CONTROLS;
   controls.ui_buttons_ready = true;
   deliver(bus, controls);
-  view = make_view(bus.snapshot(), 1000);
-  assert(contains(view, "A:") && contains(view, "B:"));
+  assert(bus.snapshot().ui_buttons_ready);
+  assert(text(make_view(bus.snapshot(), 1000)) != no_buttons);
   controls.ui_buttons_ready = false;
   deliver(bus, controls);
-  view = make_view(bus.snapshot(), 1000);
-  assert(!contains(view, "A:") && !contains(view, "B:"));
+  assert(!bus.snapshot().ui_buttons_ready);
+  assert(text(make_view(bus.snapshot(), 1000)) == no_buttons);
+  assert_same_ble(original, bus.snapshot());
   assert_unknown_output(bus.snapshot(), 1000);
+}
+
+void test_connection_intent_and_physical_link_are_independent() {
+  EventCore bus;
+  assert(!bus.snapshot().connected && !bus.snapshot().connection_enabled);
+  assert(bus.snapshot().output_state(1000) == OutputState::DISCONNECTED);
+  assert(bus.request(EventType::REQUEST_CONNECT, "test") != 0);
+  bus.dispatch();
+  assert(!bus.snapshot().connected && !bus.snapshot().connection_enabled);
+  connect(bus, false, false, true);  // BLE enabled/scanning is not a connection.
+  assert(!bus.snapshot().connected && bus.snapshot().connection_enabled);
+  assert(bus.snapshot().output_state(1000) == OutputState::DISCONNECTED);
+  assert_unknown_output(bus.snapshot(), 1000);
+  connect(bus, true, false, true);
+  assert(bus.snapshot().output_state(1000) == OutputState::INITIALIZING);
+  connect(bus, true, true, false);  // Disabled intent does not invent a physical disconnect.
+  assert(bus.snapshot().connected && !bus.snapshot().connection_enabled);
+  assert(bus.snapshot().output_state(1000) == OutputState::UNSUPPORTED);
+  connect(bus, false, true, false);
+  assert(!bus.snapshot().ready && !bus.snapshot().busy);
+  assert(bus.snapshot().output_state(1000) == OutputState::DISCONNECTED);
+}
+
+void test_output_state_transitions_and_raw_samples() {
+  EventCore bus;
+  connect(bus);
+  configure(bus);
+  assert(bus.snapshot().output_state(1000) == OutputState::UNSUPPORTED);
+  assert_unknown_output(bus.snapshot(), 1000);
+  Event raw;
+  raw.type = EventType::RAW_STATUS;
+  raw.message = "5e5e1184000000000000000000001c1c00000095";
+  raw.sampled_at = 1000;
+  deliver(bus, raw);
+  assert(bus.snapshot().raw_status_seen && bus.snapshot().raw_sampled_at == 1000);
+  assert(!bus.snapshot().telemetry_seen && !bus.snapshot().telemetry_valid);
+  assert(bus.snapshot().output_state(1000) == OutputState::UNSUPPORTED);
+  assert_unknown_output(bus.snapshot(), 1000);
+
+  capability(bus);
+  assert(bus.snapshot().output_state(1000) == OutputState::WAITING);
+  assert_unknown_output(bus.snapshot(), 1000);
+  deliver(bus, telemetry(0.0f, 0.0f, 1000, false));
+  assert(bus.snapshot().output_state(1000) == OutputState::INVALID);
+  assert_unknown_output(bus.snapshot(), 1000);
+  deliver(bus, telemetry(0.0f, 0.0f, 1001));
+  assert(bus.snapshot().output_state(1001) == OutputState::LIVE);
+  assert((large_values(make_view(bus.snapshot(), 1001)) == std::vector<std::string>{"0.0", "0.0"}));
+  assert(bus.snapshot().output_state(7000) == OutputState::LIVE);
+  assert(bus.snapshot().output_state(7001) == OutputState::STALE);
+  assert_unknown_output(bus.snapshot(), 7001);
+  raw.sampled_at = 7001;
+  deliver(bus, raw);
+  assert(bus.snapshot().raw_sampled_at == 7001 && bus.snapshot().sampled_at == 1001);
+  assert(bus.snapshot().output_state(7001) == OutputState::STALE);
+  configure(bus);
+  assert(bus.snapshot().output_state(7001) == OutputState::STALE);
+
+  capability(bus, false);
+  assert(bus.snapshot().output_state(7001) == OutputState::UNSUPPORTED);
+  assert(std::isnan(bus.snapshot().output_voltage) && std::isnan(bus.snapshot().output_current));
+  assert(!bus.snapshot().telemetry_valid && !bus.snapshot().telemetry_seen);
+  deliver(bus, telemetry(0.0f, 0.0f, 7002));  // A delayed producer cannot bypass unavailable decoder capability.
+  assert(bus.snapshot().output_state(7002) == OutputState::UNSUPPORTED);
+  assert_unknown_output(bus.snapshot(), 7002);
+  capability(bus);
+  assert(bus.snapshot().output_state(7002) == OutputState::WAITING);
+  deliver(bus, telemetry(52.7f, 3.2f, 7003));
+  assert(bus.snapshot().output_state(7003) == OutputState::LIVE);
+  connect(bus, false);
+  assert(!bus.snapshot().raw_status_seen && !bus.snapshot().telemetry_seen);
+  raw.sampled_at = 7004;
+  deliver(bus, raw);
+  assert(!bus.snapshot().raw_status_seen);
+  connect(bus);
+  assert(bus.snapshot().output_state(7004) == OutputState::WAITING);
+  assert_unknown_output(bus.snapshot(), 7004);
 }
 
 void test_observers_render_reduced_state() {
   EventCore bus;
   connect(bus);
+  capability(bus);
   configure(bus);
   int observed = 0;
   assert(bus.subscribe([&](const Event &event) {
@@ -273,7 +380,9 @@ int main() {
   test_disconnect_and_late_reports();
   test_invalid_telemetry_clears_both_values();
   test_ui_events_cannot_change_ble_state();
-  test_optional_controls_do_not_advertise_missing_buttons();
+  test_optional_controls_change_hints_without_changing_data();
+  test_connection_intent_and_physical_link_are_independent();
+  test_output_state_transitions_and_raw_samples();
   test_observers_render_reduced_state();
-  std::puts("PASS: telemetry freshness, output/config separation, and UI event isolation (real core + view)");
+  std::puts("PASS: connection intent/link isolation, telemetry capability/states/freshness, output/config separation, raw timestamp and UI event isolation (real core + view)");
 }

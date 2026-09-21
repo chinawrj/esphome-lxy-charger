@@ -95,7 +95,7 @@ int main() {
     f.press(true, true); f.press(false); assert(f.requests.size() == 1);
     Event terminal{}; terminal.type = EventType::STATUS; terminal.request_id = 1; terminal.result = Result::VERIFIED;
     f.controller.observe(terminal, f.state, f.now);
-    assert(f.mode() == UiMode::VIEW);
+    assert(f.mode() == UiMode::VIEW && f.controller.ui_event().ui_notice == UiNotice::APPLIED);
   }
   { // An unchanged edit is not a command, and current editing freezes voltage.
     Pure f; f.press(true, true); f.press(true, true);
@@ -114,6 +114,96 @@ int main() {
     assert(f.mode() == UiMode::VIEW && f.requests.empty());
     f.press(false);
     assert(f.requests.size() == 1 && f.requests[0].type == EventType::REQUEST_READ_CONFIG);
+    assert(f.controller.ui_event().ui_notice == UiNotice::REFRESH_PENDING);
+    Event result{}; result.type = EventType::STATUS; result.request_id = 1; result.result = Result::VERIFIED;
+    f.controller.observe(result, f.state, f.now);
+    assert(f.controller.ui_event().ui_notice == UiNotice::REFRESHED);
+  }
+  { // At the hold threshold we only advertise the action; release is the sole trigger.
+    Pure f;
+    f.edge(true, true); f.now = 799; f.controller.tick(f.now, f.state);
+    assert(f.controller.ui_event().ui_hold == UiHold::NONE && f.mode() == UiMode::VIEW);
+    f.now = 800; f.heartbeat();
+    assert(f.controller.ui_event().ui_hold == UiHold::EDIT && f.mode() == UiMode::VIEW && f.requests.empty());
+    f.edge(true, false); assert(f.mode() == UiMode::EDIT);
+    f.press(true); f.edge(true, true); f.now += 800; f.heartbeat();
+    assert(f.controller.ui_event().ui_hold == UiHold::REVIEW && f.mode() == UiMode::EDIT && f.requests.empty());
+    f.edge(true, false); assert(f.mode() == UiMode::CONFIRM);
+    f.edge(true, true); f.now += 800; f.heartbeat();
+    assert(f.controller.ui_event().ui_hold == UiHold::APPLY && f.requests.empty());
+    for (int i = 0; i < 10; ++i) { f.now += 100; f.heartbeat(); assert(f.requests.empty()); }
+    f.edge(true, false);
+    assert(f.requests.size() == 1 && f.controller.ui_event().ui_hold == UiHold::NONE);
+  }
+  { // Offline B connects without an LCD; only its own result completes it.
+    Pure f; f.display_enabled = false; f.heartbeat(false);
+    f.state.ready = f.state.connected = f.state.connection_enabled = false;
+    f.press(false);
+    assert(f.mode() == UiMode::CONNECTING && f.controller.ui_event().ui_notice == UiNotice::CONNECT_PENDING);
+    assert(f.requests.size() == 1 && f.requests[0].type == EventType::REQUEST_CONNECT);
+    assert(std::isnan(f.requests[0].voltage) && std::isnan(f.requests[0].current));
+    f.press(false); f.press(true, true); assert(f.requests.size() == 1);
+    Event result{}; result.type = EventType::STATUS; result.result = Result::VERIFIED;
+    result.request_id = 0; f.controller.observe(result, f.state, f.now);
+    assert(f.mode() == UiMode::CONNECTING);
+    result.request_id = 1; f.controller.observe(result, f.state, f.now);
+    assert(f.mode() == UiMode::VIEW && f.controller.ui_event().ui_notice == UiNotice::CONNECTED);
+  }
+  { // Failed connect is not mislabelled as a refresh or an applied setting.
+    Pure f; f.state.ready = f.state.connected = false; f.press(false);
+    Event result{}; result.type = EventType::STATUS; result.result = Result::FAILED; result.request_id = 1;
+    f.controller.observe(result, f.state, f.now);
+    assert(f.controller.ui_event().ui_notice == UiNotice::CONNECT_FAILED);
+    assert(f.mode() == UiMode::VIEW);
+  }
+  for (bool connected : {false, true}) {
+    Pure f; f.state.ready = false; f.state.connected = connected; f.state.connection_enabled = true;
+    for (int i = 0; i < 4; ++i) f.press(false);
+    assert(f.requests.empty() && f.controller.ui_event().ui_notice == UiNotice::NOT_READY);
+  }
+  { // Help's hold is only a hint until release; leaving consumes either short key.
+    Pure f; f.edge(false, true); f.now += 800; f.heartbeat();
+    assert(f.controller.ui_event().ui_hold == UiHold::HELP && f.mode() == UiMode::VIEW && f.requests.empty());
+    f.edge(false, false); assert(f.mode() == UiMode::HELP);
+    f.press(true, true); f.press(false, true);
+    assert(f.mode() == UiMode::HELP && f.requests.empty());
+    const auto selected = f.controller.ui_event().ui_field;
+    f.press(true); assert(f.mode() == UiMode::VIEW && f.controller.ui_event().ui_field == selected);
+    f.press(false, true); assert(f.mode() == UiMode::HELP);
+    f.press(false); assert(f.mode() == UiMode::VIEW && f.requests.empty());
+    f.press(false, true); f.now += 30000; f.heartbeat(); f.controller.tick(f.now, f.state);
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+  }
+  { // Help is unavailable without a live display; no hidden command is issued.
+    Pure f; f.display_enabled = false; f.heartbeat(false); f.press(false, true);
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+    assert(f.controller.ui_event().ui_notice == UiNotice::DISPLAY_UNAVAILABLE);
+  }
+  { // Cancelling the mode while A is held invalidates that entire gesture.
+    Pure f; f.confirmation(); f.edge(true, true); f.now += 800; f.heartbeat();
+    assert(f.controller.ui_event().ui_hold == UiHold::APPLY);
+    f.state.busy = true; f.controller.tick(f.now, f.state);
+    assert(f.mode() == UiMode::VIEW && f.controller.ui_event().ui_notice == UiNotice::BUSY);
+    f.state.busy = false; f.edge(true, false);
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+  }
+  { // A press begun while waiting cannot become an edit when the result arrives mid-hold.
+    Pure f; f.press(false); assert(f.mode() == UiMode::REFRESHING);
+    f.edge(true, true); f.now += 800;
+    Event result{}; result.type = EventType::STATUS; result.request_id = 1; result.result = Result::VERIFIED;
+    f.controller.observe(result, f.state, f.now); f.heartbeat();
+    assert(f.mode() == UiMode::VIEW && f.controller.ui_event().ui_hold == UiHold::NONE);
+    f.edge(true, false);
+    assert(f.mode() == UiMode::VIEW && f.requests.size() == 1);
+  }
+  { // B's long hold previews cancellation; an overlong A hold never submits.
+    Pure f; f.confirmation(); f.edge(false, true); f.now += 800; f.heartbeat();
+    assert(f.controller.ui_event().ui_hold == UiHold::CANCEL && f.mode() == UiMode::CONFIRM);
+    f.edge(false, false);
+    assert(f.mode() == UiMode::VIEW && f.controller.ui_event().ui_notice == UiNotice::CANCELLED);
+    f.confirmation(); f.edge(true, true); f.now += 5001; f.heartbeat();
+    assert(f.controller.ui_event().ui_hold == UiHold::RELEASE && f.requests.empty());
+    f.edge(true, false); assert(f.requests.empty());
   }
   for (int reason = 0; reason < 6; ++reason) {
     Pure f; f.confirmation();
@@ -169,6 +259,37 @@ int main() {
     f.press(false, false, false);
     assert(f.requests.size() == 1 && f.requests[0].type == EventType::REQUEST_READ_CONFIG);
   }
+  { // Local UI feedback ages normally; background traffic cannot renew or replace it.
+    Wrapper f; f.ready(); f.heartbeat(); fake_millis = 1000; f.press(true);
+    assert(f.bus.snapshot().ui_notice == UiNotice::SELECTED);
+    const uint32_t updated = f.bus.snapshot().ui_updated_at;
+    fake_millis += 5000; f.heartbeat();
+    Event background{}; background.type = EventType::STATUS;
+    background.request_id = 0; background.result = Result::VERIFIED; f.emit(background);
+    f.buttons.loop(); f.drain();
+    assert(f.bus.snapshot().ui_notice == UiNotice::SELECTED && f.bus.snapshot().ui_updated_at == updated);
+    assert(fake_millis - updated >= 3000); // The display can expire an ordinary notice.
+    f.press(false); assert(f.requests.size() == 1);
+    Event result{}; result.type = EventType::STATUS;
+    result.request_id = f.requests[0].request_id; result.result = Result::UNKNOWN;
+    f.emit(result); f.buttons.loop(); f.drain();
+    const uint32_t failed_at = f.bus.snapshot().ui_updated_at;
+    assert(f.bus.snapshot().ui_notice == UiNotice::UNKNOWN);
+    fake_millis += 5000; f.heartbeat(); f.emit(background); f.buttons.loop(); f.drain();
+    assert(f.bus.snapshot().ui_notice == UiNotice::UNKNOWN && f.bus.snapshot().ui_updated_at == failed_at);
+    f.press(true); assert(f.bus.snapshot().ui_notice == UiNotice::SELECTED);
+  }
+  { // Actual wrapper routes offline connection once and Help without a command.
+    Wrapper f;
+    f.press(false, false, false);
+    assert(f.bus.snapshot().ui_mode == UiMode::CONNECTING && f.requests.size() == 1);
+    assert(f.requests[0].type == EventType::REQUEST_CONNECT);
+    Event result{}; result.type = EventType::STATUS; result.request_id = f.requests[0].request_id;
+    result.result = Result::FAILED; f.emit(result); f.buttons.loop(); f.drain();
+    assert(f.bus.snapshot().ui_notice == UiNotice::CONNECT_FAILED);
+    f.heartbeat(); f.press(false, true); assert(f.bus.snapshot().ui_mode == UiMode::HELP);
+    f.press(false); assert(f.bus.snapshot().ui_mode == UiMode::VIEW && f.requests.size() == 1);
+  }
   { // Refresh at non-default settings is distinct from applying an old draft.
     Wrapper f; f.ready(); f.heartbeat();
     f.press(true, true); f.press(true); f.press(false, true); // Cancel a changed draft.
@@ -198,34 +319,43 @@ int main() {
     f.buttons.loop(); f.drain(); f.buttons.loop(); f.drain();
     assert(f.bus.snapshot().ui_mode == UiMode::VIEW && f.requests.empty());
   }
-  { // LED controller pulse widths, priority, expiry, and wrap.
+  { // LED has only link semantics, independent of operations, telemetry and results.
     charger_indicator::IndicatorController led;
     Snapshot state;
-    assert(led.level(state, 0) && !led.level(state, 80) && led.level(state, 3000));
-    state.connected = true;
-    assert(led.level(state, 400) && !led.level(state, 600));
-    state.ready = true; assert(led.level(state, 600));
-    state.busy = true; assert(led.level(state, 1000) && !led.level(state, 1125));
-    state.busy = false;
-    Event event{}; event.type = EventType::STATUS; event.result = Result::VERIFIED; led.observe(event, 1000);
-    assert(led.level(state, 1000) && !led.level(state, 1100) && led.level(state, 1200));
-    assert(!led.level(state, 1300) && led.level(state, 4000));
-    event.result = Result::REJECTED; led.observe(event, 5000);
-    assert(led.level(state, 5299) && !led.level(state, 5300) && led.level(state, 5500));
-    event.result = Result::UNKNOWN; led.observe(event, 6000);
-    assert(led.level(state, 6000) && led.level(state, 6250) && led.level(state, 6500));
-    assert(!led.level(state, 6600));
-    event.result = Result::VERIFIED; led.observe(event, 6700);
-    assert(!led.level(state, 6700) && led.level(state, 12000));
-    event.result = Result::FAILED; led.observe(event, 0xffffff00u);
-    assert(led.level(state, 0xffffff00u) && !led.level(state, uint32_t(0xffffff00u + 600)));
+    assert(!led.level(state, 0) && !led.level(state, 500));
+    state.connection_enabled = true;
+    assert(led.level(state, 0) && led.level(state, 499) && !led.level(state, 500));
+    assert(!led.level(state, 999) && led.level(state, 1000));
+    for (bool connected : {false, true}) {
+      for (bool enabled : {false, true}) {
+        state.connected = connected; state.connection_enabled = enabled;
+        for (bool busy : {false, true}) {
+          for (bool ready : {false, true}) {
+            state.busy = busy; state.ready = ready;
+            for (auto result : {Result::INFO, Result::ACCEPTED, Result::VERIFIED,
+                                Result::REJECTED, Result::FAILED, Result::UNKNOWN}) {
+              state.result = result; state.telemetry_valid = !ready;
+              assert(led.level(state, 250) == (connected || enabled));
+              assert(led.level(state, 750) == connected);
+            }
+          }
+        }
+      }
+    }
   }
-  { // LED wrapper works without a buttons component and never submits a request.
-    Wrapper f(false); f.indicator.loop(); assert(f.led.state);
-    fake_millis = 100; f.indicator.loop(); assert(!f.led.state);
-    f.ready(); f.indicator.loop(); assert(f.led.state);
+  { // LED wrapper works without buttons; initialization and error events cannot blink a connected link.
+    Wrapper f(false); f.indicator.loop(); assert(!f.led.state);
+    Event event{}; event.type = EventType::CONNECTION; event.connection_enabled = true;
+    f.emit(event); f.indicator.loop(); assert(f.led.state);
+    fake_millis = 500; f.indicator.loop(); assert(!f.led.state);
+    event.connected = true; event.ready = false; f.emit(event);
+    f.indicator.loop(); assert(f.led.state);
+    event = Event{}; event.type = EventType::STATUS; event.busy = true; event.result = Result::UNKNOWN;
+    f.emit(event); fake_millis = 750; f.indicator.loop(); assert(f.led.state);
     const unsigned writes = f.led.writes;
     f.indicator.loop(); assert(f.led.writes == writes && f.requests.empty());
+    event = Event{}; event.type = EventType::CONNECTION; f.emit(event);
+    f.indicator.loop(); assert(!f.led.state);
   }
-  puts("PASS: pure and actual button/LED wrappers, explicit single Apply, bounds, no-LCD read-only, heartbeat, cancellation, chord/lost-edge/wrap, UI overflow and nonblocking patterns");
+  puts("PASS: pure and actual button/LED wrappers, explicit single Apply, bounds, no-LCD read-only, heartbeat, cancellation, chord/lost-edge/wrap, UI overflow and connection-only LED");
 }

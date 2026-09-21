@@ -38,6 +38,12 @@ charger_web:
   connection_switch:
     name: "BLE connection"
     id: charger_connection_enabled
+  link_status:
+    name: "BLE status"
+    id: charger_link_status
+  output_data_status:
+    name: "Output data status"
+    id: charger_output_data_status
   output_voltage:
     name: "Output voltage"
     id: charger_output_voltage

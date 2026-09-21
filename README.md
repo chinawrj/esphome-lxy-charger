@@ -4,7 +4,7 @@
 
 A BLE charger controller built with **ESPHome 2026.9.0 and ESP-IDF**. BLE and an internal event bus form the required core. The LCD, physical buttons, LED, and standalone web interface are four independent optional modules. The web interface works without a Home Assistant server; a build without Web can still connect to the charger and read its configuration.
 
-The supported protocol uses service `FFF0`, writes to `FFF2`, and notifications from `FFF1`. A matching brand or advertised device name does not establish protocol compatibility. The main LCD view is reserved for **output voltage and current**; charging **setpoints** are shown separately in smaller text. Missing or stale output data is shown as `--.-`, never substituted with setpoints. **Live output decoding is not enabled yet**: the byte mapping and scaling still need validation against nonzero charger samples. Temperature decoding and a charging-output switch are not implemented.
+The supported protocol uses service `FFF0`, writes to `FFF2`, and notifications from `FFF1`. A matching brand or advertised device name does not establish protocol compatibility. The main LCD view is reserved for **output voltage and current**; charging **setpoints** are shown separately in smaller text. Missing or stale output data is shown as `--.-`, never substituted with setpoints. **Live output decoding is not enabled yet**: the byte mapping and scaling still need matching protocol documentation or sufficient correlated evidence. Temperature decoding and a charging-output switch are not implemented.
 
 ## Screenshots
 
@@ -16,15 +16,18 @@ These previews are generated from the **same C++ view model used by the firmware
   <img src="docs/images/lcd-output-preview.png" width="320" alt="LCD output view with unavailable live measurements shown as dashes">
   <img src="docs/images/lcd-edit-preview.png" width="320" alt="LCD editing preview with a sample 58.3 V and 5.1 A draft">
   <img src="docs/images/lcd-confirm-preview.png" width="320" alt="LCD confirmation preview requiring another A hold before Apply">
+  <img src="docs/images/lcd-help-preview.png" width="320" alt="LCD help page explaining the connection-only red LED and button actions">
 </p>
 
-Left to right: output view, edit, confirmation. The output view deliberately has no valid live sample and shows `--.-`; its smaller setpoints are example UI data. Editing and confirmation use a **58.3 V / 5.1 A sample draft**, not a captured output measurement.
+The previews show the output view, edit, confirmation, and on-device help. The output view deliberately has no valid live sample and shows `--.-`; its smaller setpoints are example UI data. Editing and confirmation use a **58.3 V / 5.1 A sample draft**, not a captured output measurement. The Chinese header explicitly separates BLE connection from output-data availability.
+
+Additional UI test scenes: [synthetic live values](docs/images/lcd-live-simulation.png), [synthetic stale data](docs/images/lcd-stale-simulation.png), and [disconnected](docs/images/lcd-disconnected-preview.png). The synthetic 53.8 V / 4.9 A values exercise rendering only; they are not charger measurements.
 
 ### Web interface on the device
 
-<img src="docs/images/web-ui.png" width="702" alt="Actual ESPHome web interface showing 58.4 V and 5.1 A readback setpoints, unavailable output measurements, and live output validity off">
+<img src="docs/images/web-ui.png" width="702" alt="Actual ESPHome web interface showing BLE connected and ready, output decoding not implemented, and 58.4 V and 5.1 A readback setpoints">
 
-Captured from a M5StickC Plus running the v2.1 development firmware after OTA. A read-only local proxy preserved the device's original page and live event data; readings were not simulated or replaced. The image is cropped to omit IP and diagnostic details. Readback is **58.4 V / 5.1 A**; output fields are **NA** and `Live output valid` is **OFF**, consistent with the pending output decoder.
+Captured from a M5StickC Plus running the updated interface firmware after OTA. A read-only local proxy preserved the device's original page and live event data; readings were not simulated or replaced. The image is cropped to omit IP and diagnostic details. `BLE status` is **Connected (ready)**, while `Output data status` explicitly says output decoding is not implemented. Readback is **58.4 V / 5.1 A**; output fields are **NA** and `Live output valid` is **OFF**.
 
 ## Choose a configuration
 
@@ -88,6 +91,8 @@ Page assets are stored on the device and do not require an external CDN. Home As
 
 | Control or reading | Meaning |
 |---|---|
+| `BLE status` | Bluetooth connected, connecting, or disconnected; independent of output decoding |
+| `Output data status` | Live, not decoded, waiting, invalid, or stale output data |
 | `Charger ready` | GATT is ready and this connection has returned its setpoints |
 | `Output voltage/current` | Live output fields; currently unavailable because the BLE output decoder is not enabled |
 | `Live output valid` | Whether a valid output sample is present and less than 6 seconds old |
@@ -102,41 +107,53 @@ The allowed settings are **58.2–58.4 V and 4.9–5.1 A**, in **0.1** steps. Th
 
 ### LCD
 
-The landscape screen puts output voltage and current first, using large digits. Smaller `Set` values show the configured voltage and current. Output data expires after **6 seconds** without a valid update and is invalidated on disconnection; the screen then shows `--.-`. A configured voltage must not be read as a measured output voltage.
+The normal view gives **output voltage and current** the largest type (40 px). Smaller `设定` (setpoint) values are the configured voltage and current. The top-left BLE state remains visible independently of the top-right data state:
 
-The compact screen also shows the selected setting, edit/confirmation state, and connection or transaction state. It omits the IP address, branding, temperature, and long status messages. A shared `charger_display` view model supplies the layout and editing state.
+| Display text | Meaning |
+|---|---|
+| `BLE 已连接` | The Bluetooth link is connected; this alone does not establish valid output readings |
+| `BLE 连接中` | Searching, connecting, or reconnecting |
+| `BLE 已断开` | No connection and connection attempts are disabled |
+| `实时` | A valid output sample is less than 6 seconds old |
+| `未解码` | The link works, but output decoding is not supported yet |
+| `已过期` | A previous valid sample is at least 6 seconds old; large readings are hidden |
 
-The current BLE service retains `84` as a raw frame and does not publish a validated output measurement, so the normal deployed view shows `--.-`. Output decoding still needs validation against nonzero charger samples. The UI's output fields and a layout preview do not establish measurement accuracy; see the revision-specific [verification record](docs/verification.md).
+A separate line explains initialization, unavailable/invalid data, or the latest local operation. The current BLE service retains `84` as a raw frame and does not publish a validated output measurement, so the deployed view shows `--.-` with **“通信正常，输出数据尚未解码”** (communication is working; output data has not been decoded). This is not a Bluetooth-disconnection message. A charger with no battery connected is not sufficient evidence to display a measured **0.0 A**.
+
+The display never substitutes setpoints for output readings. Disconnection invalidates measurements. Output decoding still needs evidence for its byte mapping and scaling; layout previews and synthetic telemetry tests do not establish that evidence. See the revision-specific [verification record](docs/verification.md).
+
+The screen omits IP addresses, branding, and temperature. Its bottom row shows the available button actions. The shared `charger_display` view model supplies the layout for both the device and previews.
 
 ### Buttons
 
-Button editing is available only when the LCD is included and usable. Hold for **800 ms to 5 seconds, then release** for a long press. Actions are evaluated on release; holds longer than 5 seconds are ignored as stuck input.
+Hold for **800 ms to 5 seconds, then release** for a long press. At the threshold, the screen prompts you to release; reaching 800 ms alone does not submit anything. Holds longer than 5 seconds are ignored as stuck input.
 
 | Mode | Button A | Button B |
 |---|---|---|
-| View | Short: select voltage/current. Long: enter edit mode. | Short: refresh setpoints. |
+| View | Short: select voltage/current. Long: enter edit mode. | Short: refresh when ready, or request one connection when disconnected and attempts are disabled. Long: open Help. |
 | Edit | Short: decrease the selected draft by 0.1. Long: open confirmation. | Short: increase the selected draft by 0.1. Long: cancel. |
-| Confirm | A second long press submits the paired voltage/current draft once. | Any press cancels. |
+| Confirm | Another independent long press submits the paired draft once. | Any normal short/long press cancels. |
+| Help | Short: return to the output view without selecting anything. | Short: return without refreshing or connecting. |
 
-Entering Edit and opening Confirm do not send settings. Values remain within the captured limits above. Editing is cancelled after **30 seconds** without input, on disconnection, when another operation makes the charger busy, when the baseline configuration changes, or when the display becomes unavailable. A cancelled draft is not submitted or replayed later.
+While a connection or operation is pending, repeated presses do not submit another request. Help explains the LED and buttons on the device itself; long presses in Help do nothing, and it closes after 30 seconds without input.
 
-Without the LCD, the Button package provides selection and read-only refresh actions; it cannot enter editing or submit Apply. Buttons communicate through events and do not call the BLE service directly.
+Editing and Help require a usable LCD. Without one, the Button package can select a field, connect, and request read-only refreshes, but cannot edit settings or submit Apply. Entering Edit and opening Confirm do not send settings. The confirmation screen shows both draft values and the original readback.
+
+Drafts remain within **58.2–58.4 V / 4.9–5.1 A**, in **0.1** steps. Editing is cancelled after **30 seconds** without input, on disconnection, when another operation makes the charger busy, when the baseline configuration changes, or when the LCD becomes unavailable. Cancelled drafts are not submitted or replayed later.
+
+Local feedback distinguishes **parameters refreshed**, **settings confirmed**, and **cancelled without sending**. A result that cannot be confirmed is labelled **“结果未确认，未重发”** (result unconfirmed; not resent). Ordinary notices appear for 3 seconds; failure, unknown-result, and connection-failure notices remain for 6 seconds. They expire automatically and do not change the LED's meaning. Button operations use events and never call the BLE service directly.
 
 ### LED
 
-The red LED operates independently of the LCD and Web:
+**The LED is physically red. Its colour does not indicate a fault.** It has exactly one purpose: showing the Bluetooth connection state.
 
-| State | Indication |
+| Indication | Meaning |
 |---|---|
-| Disconnected | 80 ms pulse every 3 seconds |
-| Connected, protocol not ready | 500 ms on / 500 ms off |
-| Ready and idle | Steady on |
-| Transaction busy | 125 ms on / 125 ms off |
-| `VERIFIED` | Two 100 ms pulses separated by 100 ms; repeat every 1.5 seconds for 3 seconds |
-| `FAILED` / `UNKNOWN` | Three 100 ms pulses separated by 150 ms; repeat every 1.5 seconds for 6 seconds |
-| `REJECTED` | Two 300 ms pulses separated by 200 ms; repeat every 1.5 seconds for 3 seconds |
+| Steady on | Bluetooth connected, including while initialization or an operation is in progress |
+| Slow flash: 500 ms on / 500 ms off | Searching, connecting, or reconnecting |
+| Off | No link and connection attempts are disabled |
 
-These indications report connection and request results, not whether charging output is enabled. Priority is failure/unknown, then busy, then success/rejection notices, then the current connection state. A quick reconnect and successful read do not erase an active 6-second failure indication. Patterns are nonblocking.
+Remember **steady = connected, flashing = connecting, off = disconnected**. Missing output decoding, stale readings, busy operations, and command results do not replace this pattern. Read the screen or Web status for those details. Long-press B in the normal view to see this explanation on the device.
 
 ## How settings are confirmed
 
@@ -154,9 +171,9 @@ Readback confirmation does not establish power-cycle persistence or actual elect
 |---|---|---|
 | Native C++ tests | Captured frame decoding; event queues, IDs and invalidation; simulated event routing for all 16 module combinations; the real BLE transaction implementation with a fake clock and GATT transport | Does not validate radio behavior, GPIO wiring, or physical display appearance |
 | ESPHome matrix | Required BLE + bus with all `2^4 = 16` LCD/Button/LED/Web combinations on M5StickC; a separate ATOMS3U build | Does not mean every combination was flashed to hardware |
-| Recorded hardware checks | M5StickC Plus headless + Web and full-profile BLE reads, explicit Apply, and reconnect behavior; the released LCD display was accepted by the operator | ATOMS3U hardware and independent red-LED/button observations have not been verified |
+| Recorded hardware checks | Current M5StickC Plus interface: the operator confirmed the Chinese LCD, button responses, and steady red LED. Historical firmware: headless + Web and full-profile BLE reads, explicit Apply with readback, and reconnect behavior passed | ATOMS3U hardware and a new-interface physical Apply test have not been verified; button-response confirmation does not establish a settings write |
 
-The local-controls test compiles the real button and LED adapters and checks confirmation, cancellation, input loss, and indication timing. The telemetry view and Web tests use synthetic typed events to check freshness, invalidation, and presentation; they do not establish the charger's output byte mapping. The Web test compiles the real adapter for all eight combinations of its three optional telemetry entities.
+The local-controls test compiles the real button and LED adapters and checks confirmation, cancellation, input loss, and connection-only indication timing, hold/release prompts, and Help behavior. The telemetry view and Web tests use synthetic typed events to check freshness, invalidation, and presentation; they do not establish the charger's output byte mapping. The Web test compiles the real adapter for all **32 combinations of five optional telemetry/status entities**. This is separate from the **16 combinations of the four optional hardware/Web modules**.
 
 The [verification record](docs/verification.md) identifies the tested revision and physical checks. The [16-combination report](docs/test-matrix.json) records build results. Check those records for the revision you are using; prior acceptance does not automatically verify a changed interface.
 

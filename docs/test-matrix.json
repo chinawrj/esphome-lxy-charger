@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
-  "run_id": "ui-telemetry-20260921T084650Z-34a4e7655e64",
-  "started_at_utc": "2026-09-21T08:46:50.634031+00:00",
-  "completed_at_utc": "2026-09-21T08:52:05.557686+00:00",
+  "run_id": "ue-connection-20260921T092250Z-bb412cea9f5a",
+  "started_at_utc": "2026-09-21T09:22:50.633780+00:00",
+  "completed_at_utc": "2026-09-21T09:26:29.767234+00:00",
   "esphome": "2026.9.0",
   "framework": "ESP-IDF 5.5.5",
   "board": "m5stick-c",
@@ -17,36 +17,38 @@
     "web"
   ],
   "source_identity": "SHA-256 manifest of tested source files; no claim about a later Git commit.",
-  "source_manifest_sha256": "34a4e7655e64d35357a715841b993776419eb757ddf364d2afbc6a2cbf330436",
+  "source_manifest_sha256": "bb412cea9f5a303fe95fa5823475b4d25759f557c3dad15f385ac8ba0a3e311e",
   "source_hashes": {
+    "assets/ChargerSansSC.ttf": "638f4c93d8a7a7f602a58469a4a8124eb240ac3e5e03a199393df2ce1acdf417",
     "assets/Roboto.ttf": "d7598e12c5dbef095ff8272cfc55da0250bd07fbdecbac8a530b9b277872a134",
+    "assets/ui-glyphs.yaml": "4daefa162f29acb62dbb736aab6e2995d4006fc32d5e8100e53f912891160397",
     "components/charger_buttons/__init__.py": "79b01c925c127fb5e5297e36f52d167b4e3c68e4332caf1a250409ffd7429717",
-    "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-    "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+    "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+    "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
     "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477",
     "components/charger_display/__init__.py": "66dd74a164bdcee55152dcebb5a26b1ca72849730787aa3e4052b847541f57f0",
-    "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
+    "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
     "components/charger_event_bus/__init__.py": "94884a840c9124f78030b0c6ad89fe8ceaa6f9be1c31e7a6ae9b583dab1189f4",
     "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
     "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-    "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+    "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
     "components/charger_indicator/__init__.py": "79587509d8160bc8a6b6d7013f5eaa622b96eeb111728da4e942ae5a4f54c915",
-    "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+    "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
     "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-    "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa",
-    "components/charger_web/__init__.py": "d2d25db75376b18e58f98d4231e2cc43452c54dcec8a24420fd88ac3b94d9bf6",
-    "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-    "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8",
+    "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1",
+    "components/charger_web/__init__.py": "f4f85faa3ec1c0222000ec7911f9ef03666a1434c282bb20f15959dbe779174d",
+    "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+    "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a",
     "components/lxy_charger/__init__.py": "c24eb8429d629355095c29b5ebb1dc33e1da4a095cc85f7cc6e3f341495b6960",
     "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-    "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+    "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
     "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
     "components/lxy_charger/test_protocol.py": "e79a11956954401697de95fd91c30066a27aad11ef63d303ed14a558c6c8918d",
     "packages/common.yaml": "26d6e7ed43fa7107149991037f810a0b2db085d9613d490b1cb50b4098cf8b20",
     "packages/m5stickc-plus-buttons.yaml": "4008deeb0ac70a48417cea766dd78e8cdcee950b15d65bc60d916b392bbde1ff",
-    "packages/m5stickc-plus-display.yaml": "fb8f268439a3aceb324db124328ca03a6ebe0ff51f43d522d5cb0402a0d1a997",
-    "packages/m5stickc-plus-led.yaml": "4603f06503ef799b19ad8c71d9331fa33345026e197a2df3d75546bbc5c4c58b",
-    "packages/web.yaml": "284d0952ea7dc4da6a89a89027f55244ef3b77daf6c0ca231cc20a754c75742e",
+    "packages/m5stickc-plus-display.yaml": "e9ec88e60c8451cb29c81d4f10a7555fb18f59cf88783becb8d0ff61043b2fcf",
+    "packages/m5stickc-plus-led.yaml": "85a5e03aebe6f8c0f7b50c29b0496a3b3e4dea8a9d6ff5677a1906e6ff0eb590",
+    "packages/web.yaml": "ac49c43e5d5919e00bb9aa6066cfdadc9a450225ace28934127805414fb6536a",
     "requirements.txt": "5a5d051ebcda43ca5146e63fb5c03fd616bff00ef15db4e1d27e7050c0fe1786",
     "secrets.example.yaml": "129adb6ce9964d2041be7ac279e29f7e35f3e12c98e26bee1a4f4cc425cc2129",
     "tests/matrix.py": "452cc5b974341d5ef25a73edc1b52b33744dec7e4e559e39290bb735b22601b0"
@@ -68,17 +70,17 @@
       "modules": [],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 18.6,
+      "seconds": 12.5,
       "validation_status": "PASS",
-      "validation_seconds": 0.3,
+      "validation_seconds": 0.2,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb"
       },
       "compiled_custom_cpp": [
@@ -87,16 +89,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 712672,
-          "sha256": "852dc696cd81687292aaaeded7624d4a31872dde519632da9213178adbd8d061"
+          "size_bytes": 713120,
+          "sha256": "1e8a93efd811988ad21ebb7dd09049694e98df68ac5823cace1ba9834eaaafb5"
         },
         "firmware.ota.bin": {
-          "size_bytes": 647136,
-          "sha256": "272567412d7a5d17191c5f9e6daca9d764220a6dbb1e638f1655377c20364dd9"
+          "size_bytes": 647584,
+          "sha256": "0cf3f645c558df3ad83ffff16eb7c38dac4f90fe2cd1aa02f01250d41b445dc2"
         },
         "firmware.elf": {
-          "size_bytes": 10062016,
-          "sha256": "379aee1a5d2355c1731651da17b3f88129d27fb453fa289437678bd3b4ab369d"
+          "size_bytes": 10067704,
+          "sha256": "c125b64683c22b7fcb37a87e9add744f14c82f89903cbd3281fc91dff46fd505"
         }
       }
     },
@@ -107,19 +109,19 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 27.4,
+      "seconds": 14.4,
       "validation_status": "PASS",
-      "validation_seconds": 0.5,
+      "validation_seconds": 0.3,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb"
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1"
       },
       "compiled_custom_cpp": [
         "components/charger_event_bus/charger_event_bus.cpp",
@@ -127,16 +129,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 780864,
-          "sha256": "88143d4290096f0aeb49993388a449b3d6a36562f8d2626c805438284871f4c0"
+          "size_bytes": 798320,
+          "sha256": "54d19878edb7d96e484436e41fb31cf5999cd0bb7b3c738e891a49a64320fde6"
         },
         "firmware.ota.bin": {
-          "size_bytes": 715328,
-          "sha256": "1adcd8e5f49e32095bfd3d77349a1042739a437f559d4c817f0d116b4ef52aae"
+          "size_bytes": 732784,
+          "sha256": "1a9b349c28c484ec1d3bbed6ebaf8964fd5613d81c50084a5ed8c5be66545154"
         },
         "firmware.elf": {
-          "size_bytes": 11625776,
-          "sha256": "fdc3b44b2dbfe88357f24f101773de75866857ad6fd8e5a2a7515d59b843cb50"
+          "size_bytes": 11667856,
+          "sha256": "1d9daaf8a366ee5b0246428a08578c690d01abcf2fc6863786aecbd7c507a3c1"
         }
       }
     },
@@ -147,7 +149,7 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 26.4,
+      "seconds": 12.7,
       "validation_status": "PASS",
       "validation_seconds": 0.2,
       "source_copy_check": "PASS",
@@ -155,12 +157,12 @@
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477"
       },
       "compiled_custom_cpp": [
@@ -170,16 +172,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 729776,
-          "sha256": "389e9f26e25e46401b696d5b8e9bb859b092d188ebee129bd67a9539a9ade18b"
+          "size_bytes": 731040,
+          "sha256": "cf9ee6c1eab38dedb93e6090dce87659face1ba70502336b635d7fbee135a57d"
         },
         "firmware.ota.bin": {
-          "size_bytes": 664240,
-          "sha256": "32d34a62878c82bdda1b4486693392beb396bd50cefcdcc0fb62804116aa2699"
+          "size_bytes": 665504,
+          "sha256": "ecfd870f5067377615c93504fcc0fe86506359779a23f0e670fe1452f8209e19"
         },
         "firmware.elf": {
-          "size_bytes": 10744684,
-          "sha256": "3b409cd71d4c2696f8746097b371d7f747dfd8bdde9b9c212d582ab02ea3ea16"
+          "size_bytes": 10755948,
+          "sha256": "f491a83dea417884b1e9f0a942fffc0869a4cc189c36b7884ad4fe5b8a5df0ef"
         }
       }
     },
@@ -191,7 +193,7 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 30.0,
+      "seconds": 14.6,
       "validation_status": "PASS",
       "validation_seconds": 0.4,
       "source_copy_check": "PASS",
@@ -199,13 +201,13 @@
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477"
       },
       "compiled_custom_cpp": [
@@ -215,16 +217,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 788144,
-          "sha256": "da33ac8fd68178c9fa4b139ed564ec8313f0a8118c2137a8de20b24885c097d6"
+          "size_bytes": 806272,
+          "sha256": "623d1bddceeb766afabb15f896ce249a459556cc9d2ddda9eea039aa7ea6bf50"
         },
         "firmware.ota.bin": {
-          "size_bytes": 722608,
-          "sha256": "269674181ac051123f074095b1b1061caac54d191a2118a2d5d7e0a2b77a2da2"
+          "size_bytes": 740736,
+          "sha256": "3dbec120901c5a7538c76bc2135eee7d55f0c9cadd3d894e255b183a9fe37fa6"
         },
         "firmware.elf": {
-          "size_bytes": 12136788,
-          "sha256": "75494260b4f4da7133014dee010f2b13c995228784cda69420574f82eabf0a63"
+          "size_bytes": 12179488,
+          "sha256": "cb797ef6a4d37c0e75be8eaa2f1b308593c695e2c47b4ea48364ef9e060f899d"
         }
       }
     },
@@ -235,7 +237,7 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 22.7,
+      "seconds": 12.6,
       "validation_status": "PASS",
       "validation_seconds": 0.2,
       "source_copy_check": "PASS",
@@ -243,13 +245,13 @@
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1"
       },
       "compiled_custom_cpp": [
         "components/charger_event_bus/charger_event_bus.cpp",
@@ -258,16 +260,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 723296,
-          "sha256": "ac2387f2b619f724435847a88009d56ab72bd58e34a0c676849163d5a415abf9"
+          "size_bytes": 723184,
+          "sha256": "63b156d614f69fb32e69627d799ad5426a49bab17d681062668f604af1a9737d"
         },
         "firmware.ota.bin": {
-          "size_bytes": 657760,
-          "sha256": "999696c38f2c343be39582d7b0aa3816a6e8d996dcbada0b1942ff7bf20704d1"
+          "size_bytes": 657648,
+          "sha256": "49fe89f2538d72e5786a67f124eecbb002f10631571d38d4987cc2bc7c277fd0"
         },
         "firmware.elf": {
-          "size_bytes": 10315252,
-          "sha256": "45eca5d490e18a117abf25e776b5a4ff2ddb7aec0fafe6b0f645cef75142b3b2"
+          "size_bytes": 10307308,
+          "sha256": "f68a4bfa23e7e2aac0901efe69f8d28cf6ec16b4f7555331da106761597376f2"
         }
       }
     },
@@ -279,22 +281,22 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 55.1,
+      "seconds": 14.5,
       "validation_status": "PASS",
-      "validation_seconds": 0.4,
+      "validation_seconds": 0.3,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1"
       },
       "compiled_custom_cpp": [
         "components/charger_event_bus/charger_event_bus.cpp",
@@ -303,16 +305,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 782176,
-          "sha256": "dbaa07aef6e06c06b15f2fa4918ce0ef2c6277c609ed1361e9cac475705c34a1"
+          "size_bytes": 799088,
+          "sha256": "2d660cd78586ff5c64fd3913e193f689eaff1c3acc9aa33339678db530417520"
         },
         "firmware.ota.bin": {
-          "size_bytes": 716640,
-          "sha256": "99a55a7b37eecb97ca52c54c75524b30659e94a67ab360b43cf0115e75e36037"
+          "size_bytes": 733552,
+          "sha256": "b066391d5439817ffbefd514eed3fce1b42e9d9488006626bc9072c62099d08b"
         },
         "firmware.elf": {
-          "size_bytes": 11720904,
-          "sha256": "cbdea10a60194f3dd9919d92f49b90ff98f0c0039b236961bdafc9b05589b7d6"
+          "size_bytes": 11748796,
+          "sha256": "aad368b0691f57f927f6c1110ffe49c7fcd1ae022a5ae323f563a702ba229064"
         }
       }
     },
@@ -324,7 +326,7 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 52.6,
+      "seconds": 25.3,
       "validation_status": "PASS",
       "validation_seconds": 0.2,
       "source_copy_check": "PASS",
@@ -332,16 +334,16 @@
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1"
       },
       "compiled_custom_cpp": [
         "components/charger_buttons/charger_buttons.cpp",
@@ -351,16 +353,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 731088,
-          "sha256": "0472a01698547619aea0ff9db83c930fd373810d126899be386d72f28ecbb084"
+          "size_bytes": 731808,
+          "sha256": "740f274078a340e9952f6fc24af152ef8a6cf85860e594e462bcbe0b0e27200a"
         },
         "firmware.ota.bin": {
-          "size_bytes": 665552,
-          "sha256": "41fd22f002675b75913cf05d36c2ba6948356e4cb957c4cd00a133c78c809fb6"
+          "size_bytes": 666272,
+          "sha256": "b42080b34224061c05b372aaeee95717f68699c003da2a0d9ca359c8e04f4f9a"
         },
         "firmware.elf": {
-          "size_bytes": 10839656,
-          "sha256": "d4116ce532391346ae1a2b9343674a4b1188da7a0b10c58722fd7cfa53e04641"
+          "size_bytes": 10836912,
+          "sha256": "990d7ddc44c0b2d9908e14d0826d1e084813968f54d005b20f795e422d86341f"
         }
       }
     },
@@ -373,25 +375,25 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 34.8,
+      "seconds": 50.1,
       "validation_status": "PASS",
-      "validation_seconds": 0.3,
+      "validation_seconds": 0.4,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1"
       },
       "compiled_custom_cpp": [
         "components/charger_buttons/charger_buttons.cpp",
@@ -401,16 +403,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 789408,
-          "sha256": "447e96696b3c6a5ceb9be47824d9f29f29a907f6cb7f1739dfee0ed8efb796b2"
+          "size_bytes": 807040,
+          "sha256": "2a9344d6214fe67cf5be572505cc52504e04aedc85ebcc51783d244c4d6eb4d9"
         },
         "firmware.ota.bin": {
-          "size_bytes": 723872,
-          "sha256": "7c37da08deaae33914a5b28ce2c7b71b0a0db9ee11244b8118558348cad771ca"
+          "size_bytes": 741504,
+          "sha256": "bd5f037362aa2d6d8388b474ec337129aa661616764aa2cdc8ac1ca88fd6d124"
         },
         "firmware.elf": {
-          "size_bytes": 12231136,
-          "sha256": "424b20a6ebfb1f11f7dff3a8bed45141ea0b7fae601d54828219ac209025464a"
+          "size_bytes": 12260252,
+          "sha256": "40205f6da2295d294e778a66530af67e41b9e48acebd39cb4066d3557fbc632a"
         }
       }
     },
@@ -421,7 +423,7 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 33.0,
+      "seconds": 53.8,
       "validation_status": "PASS",
       "validation_seconds": 0.2,
       "source_copy_check": "PASS",
@@ -429,12 +431,12 @@
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_event_bus/charger_event_bus.cpp",
@@ -443,16 +445,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1301712,
-          "sha256": "bdc07438ea16dcba4ae82c526c19b38d609e25ea820aa5265ed519b52e8249b4"
+          "size_bytes": 1302928,
+          "sha256": "c8079c9310aa863d8e9a1adb956783c3c306459b9d166be43953f4975ea39caa"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1236176,
-          "sha256": "e1e4c0785c6f788093b963df2239a37c79639e7be4991dbffcf2e95199e693fc"
+          "size_bytes": 1237392,
+          "sha256": "b23fde1f59b2e287c220912c3c98f8d77ee58a667c2ad166cf9cf2e28865471e"
         },
         "firmware.elf": {
-          "size_bytes": 18276428,
-          "sha256": "341a7af08e85ecdb3ed02c3a120a27d0c3e8a0773f01c81528aec6a21805a5b5"
+          "size_bytes": 18283268,
+          "sha256": "500f666c27121c1dffe6cdc827e03c03c8ac97483acba22e51ce55d21b8bb7dd"
         }
       }
     },
@@ -464,7 +466,7 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 48.6,
+      "seconds": 35.4,
       "validation_status": "PASS",
       "validation_seconds": 0.4,
       "source_copy_check": "PASS",
@@ -472,13 +474,13 @@
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_event_bus/charger_event_bus.cpp",
@@ -487,16 +489,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1370096,
-          "sha256": "61b45a61667fd1f717744e66696a30f0f4ad2897028405b18e0b38751e7b0c46"
+          "size_bytes": 1388160,
+          "sha256": "6071fa72a19e9fe18881193a8f8fe75c2ba815831be63f76028cb7d388be91b0"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1304560,
-          "sha256": "e65c450df08323767cc13bb7be78c58c0dd620820df076a49fe29db808c048b9"
+          "size_bytes": 1322624,
+          "sha256": "489c443c68462fbc8b1bc184de92dd515ed0d105711c5ead72f41ba73823fec7"
         },
         "firmware.elf": {
-          "size_bytes": 19859648,
-          "sha256": "0652976685dce9b8e513db7395a3b62605c8b934ab0a78ab0eb36cf6281052e7"
+          "size_bytes": 19901864,
+          "sha256": "67638066ccb078948c2a910ed21955542815b126ebc069311f7fb59844eb43b7"
         }
       }
     },
@@ -508,7 +510,7 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 43.1,
+      "seconds": 29.7,
       "validation_status": "PASS",
       "validation_seconds": 0.2,
       "source_copy_check": "PASS",
@@ -516,15 +518,15 @@
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_buttons/charger_buttons.cpp",
@@ -534,16 +536,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1317360,
-          "sha256": "93130e52f0076d2357e55aba294e775b61342e3896f0ceddef654495f91071e3"
+          "size_bytes": 1319328,
+          "sha256": "d1e4c1351cc3ce7d12e7d317300f5eda9bf841f42ca1efd6b3276ed2a7da62e1"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1251824,
-          "sha256": "e618323114e5a245357fc158d49e14ebf9567da42ae2acae7ae2e988399deae0"
+          "size_bytes": 1253792,
+          "sha256": "73e5d78d56920fe709a635076414ff28ecfa15e377707cfefc27db85da277395"
         },
         "firmware.elf": {
-          "size_bytes": 18783248,
-          "sha256": "67ba001a7685ebf393f94487dec09494158ef87502ac1638af0db1c8c2c4364e"
+          "size_bytes": 18799604,
+          "sha256": "916d11a4a52f666c8e0142b0901ccad6f1431f0d243b8d3f3280a6c12bc31c7f"
         }
       }
     },
@@ -556,24 +558,24 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 46.4,
+      "seconds": 32.9,
       "validation_status": "PASS",
-      "validation_seconds": 0.5,
+      "validation_seconds": 0.4,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_buttons/charger_buttons.cpp",
@@ -583,16 +585,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1376464,
-          "sha256": "70d07e61c130377a9a9ce8362dde2a49ca2db98c50cdabc4e004c04d8307f223"
+          "size_bytes": 1395248,
+          "sha256": "93f4d18eb5bd2c72a59d794df18830cbf56b0da7af15826117cca42e29851bc6"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1310928,
-          "sha256": "34eb7c392db6a6baa4035364f69f239226b3a8ae6a6b2e16876d452c30e9093c"
+          "size_bytes": 1329712,
+          "sha256": "dfc05b3a9fe8e0640d80fe021551df64cfd3ddc2eb1f798f1ebf2b617b41f34c"
         },
         "firmware.elf": {
-          "size_bytes": 20206552,
-          "sha256": "fcbf095c75048a6fd39d5852eb0a1eb2f7aa574d9a5dd8c05efe1974be2cade9"
+          "size_bytes": 20254408,
+          "sha256": "00120b970aa5b09205dbeea61b5e0a5d66b6563d672b7eca8c8af75010e983a9"
         }
       }
     },
@@ -604,23 +606,23 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 46.0,
+      "seconds": 31.2,
       "validation_status": "PASS",
-      "validation_seconds": 0.3,
+      "validation_seconds": 0.2,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1",
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_event_bus/charger_event_bus.cpp",
@@ -630,16 +632,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1312224,
-          "sha256": "5eeb8628dab7bf34bc95f41ad02367386abecaf3d3e5be34cdac1cd18e83c82f"
+          "size_bytes": 1312848,
+          "sha256": "77b5d2128aeb8e2a5b2e1d906ee8f7420a6889e99a1692a444a0db73149edefb"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1246688,
-          "sha256": "d661d4ca587a940a7adae10e4c748c375e909fd2dc2d0e84ccf9347a092cebe6"
+          "size_bytes": 1247312,
+          "sha256": "3dc79ff805ea2b468c59ea788df822dac32bb8d0401240ce0edf5d55b1d301df"
         },
         "firmware.elf": {
-          "size_bytes": 18529564,
-          "sha256": "06b81cc9d47f3fd4d8b5f43cc95feacaa1bce01ef81740a0c7df122038d9fffd"
+          "size_bytes": 18522860,
+          "sha256": "fead07ed4758a04a7fc4678ffdc5209270b150d7d269ba6e769b14add235b034"
         }
       }
     },
@@ -652,24 +654,24 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 44.3,
+      "seconds": 34.5,
       "validation_status": "PASS",
-      "validation_seconds": 0.5,
+      "validation_seconds": 0.4,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1",
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_event_bus/charger_event_bus.cpp",
@@ -679,16 +681,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1371456,
-          "sha256": "c3258b3e30e480bf3a10d549233ce0ad530609f9bab423509961fc376c336544"
+          "size_bytes": 1388960,
+          "sha256": "ac304c851bffc7c599dc62e97c08a10e028d710577d7d5f79be09d07e4c1d5dc"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1305920,
-          "sha256": "6ded4118d75393d2fc6cceedf96bcb5cbf0522a368546692d501113c8a4c8cba"
+          "size_bytes": 1323424,
+          "sha256": "6e31861147afbaa213a8ca848602980324f419fa59332b99874e6832ed6a528e"
         },
         "firmware.elf": {
-          "size_bytes": 19955048,
-          "sha256": "a276be1516c800e8b2a446422fd2ae30fd3077e74e8aeb6ddeec3e780ae9d1e2"
+          "size_bytes": 19983764,
+          "sha256": "e561aa09439cc686a213d806dad24ccb2d6f275abfb7b72788c762b8f2ceb48f"
         }
       }
     },
@@ -701,26 +703,26 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 39.5,
+      "seconds": 26.1,
       "validation_status": "PASS",
-      "validation_seconds": 0.3,
+      "validation_seconds": 0.2,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1",
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_buttons/charger_buttons.cpp",
@@ -731,16 +733,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1318704,
-          "sha256": "202d98b4595d209533c59f6e688236cd85978a71560472437bbfac5d741876f7"
+          "size_bytes": 1320112,
+          "sha256": "79bc937e6c2a47410d6dbef5d452a884a82b040c1c21a6cdb4fe9ce27920ef4e"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1253168,
-          "sha256": "83a6ab57b9017c3b23ecfda8bf7d9c7e886aba03c563da499484d2fd8d30d4d4"
+          "size_bytes": 1254576,
+          "sha256": "e7e9b408cc3d22c363ea0e7b11ddccbbf9ad573a388ffc120387b17ab832cbb3"
         },
         "firmware.elf": {
-          "size_bytes": 18882312,
-          "sha256": "a324d796b6cf529b692eeed936ebdb5dee34751dbb8f1d0c4107b1ccc561fa11"
+          "size_bytes": 18881040,
+          "sha256": "b33bf029c60b9d66663fa6d4320b1ccc7039c55148c31669cd4f2bc9afd6d3e8"
         }
       }
     },
@@ -754,27 +756,27 @@
       ],
       "mode": "compile",
       "status": "PASS",
-      "seconds": 29.3,
+      "seconds": 19.2,
       "validation_status": "PASS",
-      "validation_seconds": 0.5,
+      "validation_seconds": 0.4,
       "source_copy_check": "PASS",
       "compiled_component_check": "PASS",
       "verified_cpp_and_header_files": {
         "components/charger_event_bus/charger_event_bus.cpp": "0f5fc2daaf35972954ef89276dfaba31c3b805ba176c0d35fe4b6a6ce0d51542",
         "components/charger_event_bus/charger_event_bus.h": "f2828a03415f08681e0a8ad14068dee633c579b571d5717e88b6505293c244bc",
-        "components/charger_event_bus/event_core.h": "da6642ec9df06e11d31b43d026fdd6f86377671e4370e2e8b2a7d2a497cf5615",
+        "components/charger_event_bus/event_core.h": "09e7503bb2448ed90edfff0d7125bec4316b6931142dfbafb359f35580eaef10",
         "components/lxy_charger/charger_protocol.h": "44bd5eb93fef038b89c55c10d7b2a69ad1fb228e41e97d65de9e9cc890587ed3",
-        "components/lxy_charger/lxy_charger.cpp": "92914826f599bd5ab3906f54b7b1fc4b6492835cbf67414e9316cb2af3016f65",
+        "components/lxy_charger/lxy_charger.cpp": "d2bafadc6f1063bf2dacb3266a12fadfcbf5f8b8cbe3afb5de87043c3f40d669",
         "components/lxy_charger/lxy_charger.h": "dd0e7d810a477684989d82160634849de3f5c03602907775c175fcae9db5f6bb",
-        "components/charger_display/charger_display.h": "ef660b6f53fae915da36d15ee02082a0388c0f55fefc1a5a3f6571dea2f560eb",
-        "components/charger_buttons/buttons_controller.h": "81533230f89f977a38770ee52df50543f3ca5723250e52946e0ebbce9ed45a55",
-        "components/charger_buttons/charger_buttons.cpp": "294abd3263a83a833f7ae38d2e059edeab320651d55abc85e858e7fb277fbcd7",
+        "components/charger_display/charger_display.h": "d83baa7fec9e57acd83a70c49dbb0e4427daa1924c16b8ffde5f5ef64d3e37f1",
+        "components/charger_buttons/buttons_controller.h": "45269cc14700df4de5b63a0bfb1e4a124258acd7869ce9643bc7edcbbdf039b3",
+        "components/charger_buttons/charger_buttons.cpp": "6fa53bf285df27496bd05727682f9d8bb5e1d8b8a41f61e0535b19b717cb6d2c",
         "components/charger_buttons/charger_buttons.h": "6a0b2488f69eda5f697acc2bfab936e1a659059a0a162ee87e8d9a117497e477",
-        "components/charger_indicator/charger_indicator.cpp": "cefaedad30d8bf4589882a2d149111361c985e43e36f969ca4a379c0dd7a8e46",
+        "components/charger_indicator/charger_indicator.cpp": "691a1cda3d61b915f9e7d40c6559d5f32df3f2a25054d8f42d63f44282718cec",
         "components/charger_indicator/charger_indicator.h": "a7caa6d1e733fbfeda5ca6713f8eae82a359ab61347ed6cb07324b223780bcf5",
-        "components/charger_indicator/indicator_controller.h": "5f8645a2b28e22fe2b8efbb81a53c29f67f458c414c43fa2eb0d9469a0e404fa",
-        "components/charger_web/charger_web.cpp": "ce076f6c7ad0684fff9bc1abe56453921992fbd31427119a014dfc22eb196914",
-        "components/charger_web/charger_web.h": "94a5063d990ae39d67792f6484dc71caa57f90292cc31e7d0593bec4767bbcc8"
+        "components/charger_indicator/indicator_controller.h": "2d4c303167f15e9f87e5e097b2ef2db5082b899357e5a07a9f3075a3d82b7fe1",
+        "components/charger_web/charger_web.cpp": "541ca595ef2428f5551b4529aaf53a143070286a6e2b354d06741eb4912c7042",
+        "components/charger_web/charger_web.h": "082c990f5793c98c67b9c258cb404fb60a1706987c71253768db36b0b17dd35a"
       },
       "compiled_custom_cpp": [
         "components/charger_buttons/charger_buttons.cpp",
@@ -785,16 +787,16 @@
       ],
       "artifacts": {
         "firmware.factory.bin": {
-          "size_bytes": 1377760,
-          "sha256": "1ab7689b5851ca4f79d6a5061fbfb40b3c5fe47b6ed437da76a9b74ea5fa838d"
+          "size_bytes": 1396016,
+          "sha256": "abbca99aca4f7eb48a3ad71324b3e8bae2d82396e9812c5cd9ea651eb6a90395"
         },
         "firmware.ota.bin": {
-          "size_bytes": 1312224,
-          "sha256": "c0a2cb26b07de848f0d349a7fe82d7242e9ec4994269c78642d1489efdc838eb"
+          "size_bytes": 1330480,
+          "sha256": "6401ba0e22b5e716372ae1f76f2fe209b13bc2e4e7db161f4706d5167eed55c0"
         },
         "firmware.elf": {
-          "size_bytes": 20309908,
-          "sha256": "55bd579f751ea2cb50eca63fbcf90d7601d213a0a3e93c981318ae13c67d8980"
+          "size_bytes": 20336008,
+          "sha256": "281a0e33ec5ca66f0169dd87933ed670d7899ef990ba87e71cae8f147342f4e0"
         }
       }
     }

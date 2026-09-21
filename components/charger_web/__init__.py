@@ -28,6 +28,8 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Required("connection"): binary_sensor.binary_sensor_schema(),
     cv.Required("connection_switch"): switch.switch_schema(ConnectionSwitch),
     cv.Required("transaction_status"): text_sensor.text_sensor_schema(),
+    cv.Optional("link_status"): text_sensor.text_sensor_schema(),
+    cv.Optional("output_data_status"): text_sensor.text_sensor_schema(),
     cv.Optional("raw_status"): text_sensor.text_sensor_schema(),
 }).extend(cv.COMPONENT_SCHEMA)
 
@@ -58,7 +60,7 @@ async def to_code(config):
     cg.add(var.set_connection(child))
     child = await switch.new_switch(config["connection_switch"], var)
     cg.add(var.set_connection_switch(child))
-    for key in ("transaction_status", "raw_status"):
+    for key in ("transaction_status", "raw_status", "link_status", "output_data_status"):
         if key in config:
             child = await text_sensor.new_text_sensor(config[key])
             cg.add(getattr(var, "set_" + key)(child))

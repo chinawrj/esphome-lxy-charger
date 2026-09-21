@@ -50,6 +50,8 @@ class ChargerWeb : public Component {
   void set_connection(binary_sensor::BinarySensor *value) { ready_sensor_ = value; }
   void set_connection_switch(ConnectionSwitch *value) { connection_switch_ = value; }
   void set_transaction_status(text_sensor::TextSensor *value) { status_sensor_ = value; }
+  void set_link_status(text_sensor::TextSensor *value) { link_status_sensor_ = value; }
+  void set_output_data_status(text_sensor::TextSensor *value) { output_status_sensor_ = value; }
   void set_raw_status(text_sensor::TextSensor *value) { raw_sensor_ = value; }
   bool stage(bool voltage, float value);
   void apply();
@@ -72,6 +74,10 @@ class ChargerWeb : public Component {
   ConnectionSwitch *connection_switch_{nullptr};
   text_sensor::TextSensor *status_sensor_{nullptr};
   text_sensor::TextSensor *raw_sensor_{nullptr};
+  text_sensor::TextSensor *link_status_sensor_{nullptr};
+  text_sensor::TextSensor *output_status_sensor_{nullptr};
+  std::string published_link_status_;
+  std::string published_output_status_;
   float voltage_{NAN};
   float current_{NAN};
 };

@@ -20,6 +20,10 @@ void LXYCharger::setup() {
     this->mark_failed();
     return;
   }
+  Event capability{};
+  capability.type = EventType::TELEMETRY_CAPABILITY;
+  capability.telemetry_supported = false;  // 84 V/A mapping has not been verified.
+  this->publish_(capability);
   this->publish_connection_();
   this->publish_status_("Disconnected; settings are never applied automatically");
 }
@@ -71,6 +75,7 @@ void LXYCharger::publish_status_(const char *message, Result result, uint32_t re
   event.result = result;
   event.message = message;
   event.connected = this->link_connected_;
+  event.connection_enabled = this->parent_ && this->parent()->enabled;
   event.ready = this->ready_();
   event.busy = this->busy_();
   this->publish_(event);
@@ -82,6 +87,7 @@ void LXYCharger::publish_connection_(uint32_t request_id, Result result) {
   event.request_id = request_id;
   event.result = result;
   event.connected = this->link_connected_;
+  event.connection_enabled = this->parent_ && this->parent()->enabled;
   event.ready = this->ready_();
   event.busy = this->busy_();
   this->publish_(event);
@@ -289,6 +295,7 @@ void LXYCharger::handle_frame_(const uint8_t *frame, size_t size) {
     }
     Event event{};
     event.type = EventType::RAW_STATUS;
+    event.sampled_at = millis();
     event.message = hex_(frame, size);
     this->publish_(event);
     return;

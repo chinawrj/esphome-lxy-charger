@@ -3,7 +3,7 @@
 
 namespace esphome::charger_indicator {
 void ChargerIndicator::setup() {
-  if (!bus_ || !output_ || !bus_->subscribe([this](const Event &event) { controller_.observe(event, millis()); })) {
+  if (!bus_ || !output_) {
     ESP_LOGE("charger_indicator", "Cannot initialize event-bus LED");
     if (output_) output_->turn_off();
     mark_failed();

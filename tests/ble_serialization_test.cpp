@@ -89,6 +89,81 @@ struct Fixture {
 };
 
 int main() {
+  { // Setup advertises missing decoding; enabling BLE is not a physical link.
+    fake_millis = 0;
+    native_writes.clear();
+    native_write_result = ESP_OK;
+    ChargerEventBus bus;
+    ble_client::BLEClient client;
+    client.current = esp32_ble_tracker::ClientState::IDLE;
+    client.enabled = false;
+    TestCharger charger;
+    std::vector<Event> events;
+    assert(bus.subscribe([&](const Event &event) { events.push_back(event); }));
+    charger.set_event_bus(&bus);
+    charger.attach(&client);
+    charger.setup();
+    for (unsigned i = 0; i < 8; ++i) bus.loop();
+    assert(!charger.is_failed());
+    assert(!bus.snapshot().connected && !bus.snapshot().connection_enabled);
+    assert(!bus.snapshot().telemetry_supported && !bus.snapshot().telemetry_valid);
+    unsigned capabilities = 0;
+    for (const auto &event : events) {
+      if (event.type == EventType::TELEMETRY_CAPABILITY) {
+        ++capabilities;
+        assert(event.source == "ble" && !event.telemetry_supported);
+      }
+      assert(event.type != EventType::TELEMETRY);
+    }
+    assert(capabilities == 1 && native_writes.empty());
+    assert(bus.request(EventType::REQUEST_CONNECT, "test") != 0);
+    for (unsigned i = 0; i < 8; ++i) bus.loop();
+    assert(client.enabled && bus.snapshot().connection_enabled);
+    assert(!bus.snapshot().connected && !bus.snapshot().ready);
+    assert(bus.snapshot().output_state(0) == OutputState::DISCONNECTED);
+    assert(native_writes.empty());
+    charger.establish();
+    for (unsigned i = 0; i < 8; ++i) bus.loop();
+    assert(bus.snapshot().connected && bus.snapshot().ready);
+    assert(bus.snapshot().output_state(0) == OutputState::UNSUPPORTED);
+    assert(bus.request(EventType::REQUEST_DISCONNECT, "test") != 0);
+    for (unsigned i = 0; i < 8; ++i) bus.loop();
+    assert(!client.enabled && !bus.snapshot().connection_enabled && !bus.snapshot().connected);
+    assert(native_writes.empty());
+  }
+  { // A raw sample keeps its RX timestamp, never publishes guessed output values.
+    Fixture f;
+    assert(f.bus.snapshot().output_state(0) == OutputState::UNSUPPORTED);
+    f.tick(2000);
+    const auto id = f.request(EventType::REQUEST_READ_CONFIG);
+    f.tick(2120);
+    f.status();
+    assert(f.bus.snapshot().raw_status_seen && f.bus.snapshot().raw_sampled_at == 2120);
+    assert(!f.bus.snapshot().telemetry_valid && !f.bus.snapshot().telemetry_seen);
+    assert(std::isnan(f.bus.snapshot().output_voltage) && std::isnan(f.bus.snapshot().output_current));
+    assert(f.bus.snapshot().output_state(2120) == OutputState::UNSUPPORTED);
+    assert(f.commands() == std::vector<uint8_t>{4});
+    f.tick(2320);
+    assert((f.commands() == std::vector<uint8_t>{4, 2}));
+    f.config();
+    assert(f.result(id, Result::VERIFIED));
+    assert(f.bus.snapshot().raw_sampled_at == 2120);
+    unsigned raw_samples = 0;
+    for (const auto &event : f.events) {
+      assert(event.type != EventType::TELEMETRY);
+      if (event.type == EventType::RAW_STATUS) {
+        ++raw_samples;
+        assert(event.source == "ble" && event.sampled_at == 2120);
+      }
+    }
+    assert(raw_samples == 1);
+    f.disconnect();
+    assert(!f.bus.snapshot().raw_status_seen && !f.bus.snapshot().telemetry_seen);
+    assert(f.bus.snapshot().connection_enabled);  // Unexpected link loss keeps reconnect intent.
+    f.charger.establish(); f.drain();
+    assert(!f.bus.snapshot().raw_status_seen);
+    assert(f.bus.snapshot().output_state(2400) == OutputState::UNSUPPORTED);
+  }
   { // Reproduce the observed 04 / (120 ms) READ / 84 sequence.
     Fixture f;
     f.tick(2000);
@@ -226,5 +301,5 @@ int main() {
     assert(f.commands() == std::vector<uint8_t>{4});
     assert(!f.bus.snapshot().ready);
   }
-  puts("PASS: real BLE 04/84 serialization, one queued request, immutable Apply, single-send echo/readback, timeout/disconnect/overflow cancellation, no replay");
+  puts("PASS: real BLE setup capability/connection intent/raw timestamps, 04/84 serialization, immutable Apply, single-send echo/readback, timeout/disconnect/overflow cancellation, no replay");
 }

@@ -1,9 +1,78 @@
 # Optional LCD view
 
-`charger_display.h` is a portable view model: it returns positioned labels using only an event-bus snapshot and the current boot-relative time. The LCD YAML owns power, SPI, the display and fonts, and draws these labels at 240 × 135.
+`charger_display.h` is the portable, typed view model shared by firmware and
+layout previews. It returns positioned labels from the event-bus snapshot and
+boot-relative time. The LCD YAML owns AXP192 power, SPI, ST7789V and fonts, and
+renders a landscape 240 × 135 page using **ESPHome `mipi_spi`, not LVGL**.
+Chinese labels use the bundled ChargerSansSC subset; large numbers use Roboto.
 
-The normal page gives measured output the largest type. Setpoints are separate and smaller. Missing, disconnected or ≥6-second-old measurements display `--.-`; setpoints never substitute for output. Button edit/confirmation pages show the immutable local drafts. A refresh keeps the output page and shows current readback values, not a cancelled draft.
+## Three separate kinds of information
 
-The LCD publishes `UI_DISPLAY` after each draw. Its power initialization must have succeeded and the display must not have failed. Buttons require this heartbeat within 3 seconds. `UI_CONTROLS` lets the LCD omit button instructions when no Button module is installed. No BLE, Web, Button or LED object is referenced.
+The top link label uses `connected` and `connection_enabled`: actual connection,
+connection/search enabled, or disconnected/disabled. It does not infer link state
+from readiness, a numeric display or the LED's fixed red color.
 
-`tests/render_lcd.py` compiles this same view model and generates documentation previews with Pillow and the bundled Roboto font. They are layout previews, not hardware photos; font rasterization can differ by a pixel. `tests/test_telemetry_view.py` tests the real view and event reducer.
+The large values are measured output only. The smaller “设定” row contains
+configuration readback, never a substitute for output. `output_state(now)`
+separately distinguishes DISCONNECTED, INITIALIZING, UNSUPPORTED, WAITING, LIVE,
+STALE and INVALID. A supported, valid, connected measurement younger than
+6000 ms may be shown as LIVE. Other states show `--.-` with an explicit reason,
+such as “通信正常，输出数据尚未解码”.
+
+**Real-time 84 voltage/current decoding is not yet implemented.** BLE declares
+`TELEMETRY_CAPABILITY.telemetry_supported=false`; raw status or CONFIG events cannot enable measured
+values. Therefore an otherwise connected, ready charger currently shows
+UNSUPPORTED/“未解码”. Being unloaded is not evidence of a measured zero; the
+view must not synthesize 0 V or 0 A. OutputState describes measurement availability,
+not charger output enablement.
+
+The board LED is physically red. It is steady for an actual BLE link, blinks
+500 ms on/off while connection is enabled but absent, and is off when disabled
+and disconnected. It has no transaction/error/charging meaning.
+
+## Local pages and feedback
+
+EDIT, CONFIRM and SUBMITTING display the pair of local draft setpoints. Confirm
+also shows the original readback pair and requires a separate long A release to
+submit once. REFRESHING retains the output/current-readback page and labels a
+read request, rather than showing an old cancelled draft as Apply. CONNECTING
+has separate feedback and request correlation. No page action is emitted by the
+view model itself.
+
+Local feedback comes from typed `UiNotice`, not string matching or the most
+recent background BLE result. It distinguishes APPLIED, REFRESHED, CONNECTED,
+CONNECT_FAILED, cancellation, limits, not-ready/busy, timeout and unknown result.
+UI_STATE.sampled_at becomes ui_updated_at. On the normal page ordinary notices
+are visible for 3 seconds; FAILED, UNKNOWN and CONNECT_FAILED for 6 seconds.
+The snapshot keeps the last notice; display expiry does not modify it. Connection,
+refresh and busy messages take precedence while active. Background readbacks and
+LCD heartbeats do not renew the local feedback timestamp.
+
+`UiHold` explains the action that will occur on release. At 800 ms it can show
+“松开 A 进入编辑”, “松开 A 提交一次” or the corresponding review/cancel/help hint.
+Crossing the threshold does not send a request. Holds over 5 seconds ask the user
+to release and retry, without executing an action. Loss of the editing mode
+invalidates the whole held gesture.
+
+View B short refreshes a ready device, connects a disconnected/disabled device
+once, or asks the user to wait for an already-enabled connection. View B long
+opens HELP, explaining the fixed red LED and controls. Short A/B returns from
+Help without also selecting, refreshing or connecting; long presses do nothing.
+Help also returns after 30 seconds without input. `UI_CONTROLS` removes control
+hints/highlights in a display-only configuration.
+
+## Display capability and validation
+
+Every 250 ms draw callback publishes UI_DISPLAY availability from successful
+power initialization and the display component's failure flag. Buttons measure
+heartbeat reception and prohibit edits/Apply after 3 seconds without a fresh
+available display. Without LCD, buttons may still connect/read, but cannot submit
+settings or enter invisible Help. The view references no BLE, Web, Button or LED
+objects; all application input is from the bus.
+
+`tests/render_lcd.py` compiles this same model and renders labels with the bundled
+fonts to create documentation previews. These are layout previews, not hardware
+photos; font rasterization may differ by a pixel. `tests/test_telemetry_view.py`
+checks the real reducer and view; `tests/test_local_controls.py` checks hold,
+request-correlation and cancellation behavior. Neither replaces a physical panel
+and button check.

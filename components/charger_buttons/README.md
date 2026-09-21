@@ -8,10 +8,18 @@ failure announces false, so an LCD-only configuration does not show button hints
 
 | Screen | A short | B short | A long | B long |
 | --- | --- | --- | --- | --- |
-| View | Select voltage/current | Read configuration | Enter selected editor | No action |
+| View | Select voltage/current | Refresh / connect / wait | Enter selected editor | Help |
 | Edit | Subtract 0.1 | Add 0.1 | Review confirmation | Cancel |
 | Confirm | No action | Cancel | Submit Apply once | Cancel |
 | Waiting | No action | No action | No action | No action |
+| Help | Return only | Return only | No action | No action |
+
+On View, short B refreshes a ready, idle charger. If BLE is both disconnected
+and disabled, it requests connection once. If automatic connection is already
+enabled or GATT initialization is in progress, it displays a waiting notice
+without requesting another connection. `CONNECTING` tracks its own request ID
+and reports `CONNECTED` or `CONNECT_FAILED`, separately from refresh and Apply.
+Connection and refresh remain available without an LCD.
 
 Refresh uses the distinct `REFRESHING` UI mode: the LCD keeps showing current
 readback rather than old editing drafts or an Apply confirmation. Both refresh
@@ -21,6 +29,12 @@ A gesture is evaluated once, on release. Short presses are 40–799 ms after GPI
 debouncing; long presses are 800–5000 ms. Holding does not repeat adjustments.
 The two long presses for review and submission must be separate press/release
 cycles. A simultaneous two-button gesture is suppressed and cancels an edit.
+At 800 ms the `UiHold` hint changes to “release to edit/review/apply/cancel/help”;
+reaching the threshold never executes an action. A hold longer than five seconds
+shows “release and try again” and its release performs no action. Losing a mode
+while holding invalidates that entire gesture. Help requires a live LCD, exits
+after 30 seconds without an action, and consumes the return key without also
+refreshing, connecting or editing.
 
 Entering edit freezes both values from the same current readback. Only the
 selected value changes; bounds remain 58.2–58.4 V and 4.9–5.1 A. Unchanged drafts
@@ -32,8 +46,15 @@ are never automatically replayed, even after reconnect.
 The LCD must publish `UI_DISPLAY` with `ui_display_ready=true` after a real draw,
 at least every three seconds. A missing/expired heartbeat or a false capability
 blocks edit and Apply. **Without the LCD package, buttons only select and request
-readback; they cannot submit settings.** Failure to publish an edit/confirmation
+connection/readback; they cannot submit settings or open invisible Help.** Failure to publish an edit/confirmation
 `UI_STATE` also cancels the draft.
+
+UI feedback uses typed `UiNotice` values, not parsing diagnostic strings.
+`APPLIED` and `REFRESHED` are emitted only after a terminal STATUS for this
+controller's own pending request ID. Failure/unknown and cancellation/limit/wait
+notices have distinct types. UI changes set `UI_STATE.sampled_at`, reduced to
+`Snapshot.ui_updated_at`; background traffic and LCD heartbeats do not renew
+this timestamp or overwrite the local notice. The display owns notice expiry.
 
 GPIO integration sends `INPUT` from `buttons_gpio`, with messages `a_down`,
 `a_up`, `b_down`, `b_up`. For these INPUT events only, `request_id` is a shared

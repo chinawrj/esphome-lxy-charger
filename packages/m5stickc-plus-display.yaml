@@ -52,14 +52,14 @@ spi:
     mosi_pin: GPIO15
 
 font:
-  - file: assets/Roboto.ttf
+  - file: assets/ChargerSansSC.ttf
     id: m5stick_font_small
-    size: 11
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
-  - file: assets/Roboto.ttf
+    size: 12
+    glyphs: !include ../assets/ui-glyphs.yaml
+  - file: assets/ChargerSansSC.ttf
     id: m5stick_font_title
     size: 14
-    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
+    glyphs: !include ../assets/ui-glyphs.yaml
   - file: assets/Roboto.ttf
     id: m5stick_font_value
     size: 40

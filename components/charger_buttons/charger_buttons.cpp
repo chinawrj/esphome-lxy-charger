@@ -40,7 +40,9 @@ void ChargerButtons::loop() {
   if (is_failed()) return;
   controller_.tick(millis(), bus_->snapshot());
   if (controller_.changed()) {
-    if (bus_->publish(controller_.ui_event())) controller_.published();
+    Event event = controller_.ui_event();
+    event.sampled_at = millis();  // Only local UI changes refresh feedback age.
+    if (bus_->publish(event)) controller_.published();
     else controller_.display_publish_failed();
   }
 }
