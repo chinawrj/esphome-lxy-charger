@@ -92,7 +92,7 @@ esphome logs esp32-headless.yaml --device /dev/cu.YOUR_PORT
 |---|---|---|
 | 原生 C++ 测试 | 抓包帧编解码；队列、关联 ID、快照失效；16 种模块组合的模拟事件路由 | 实际无线通信、引脚和屏幕效果 |
 | ESPHome 配置与固件矩阵 | 固定必选 BLE+bus，遍历 LCD/Button/LED/Web 的全部 `2^4 = 16` 种 M5StickC 组合；另编译 ATOMS3U | 已把所有组合逐个刷到硬件 |
-| 实机验证 | M5StickC Plus 无 LCD + Web 的读写与重连：**通过**；完整配置已安装，屏幕/按键观察待确认 | ATOMS3U 实机结果：**尚未验证** |
+| 实机验证 | M5StickC Plus 无 LCD + Web 和完整配置的 BLE 读写与重连：**通过**；屏幕、红灯及实体按键观察待确认 | ATOMS3U 实机结果：**尚未验证** |
 
 运行原生测试：
 
