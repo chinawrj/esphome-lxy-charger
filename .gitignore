@@ -1,0 +1,15 @@
+.esphome/
+.venv/
+secrets.yaml
+__pycache__/
+*.pyc
+firmware/
+original-firmware/
+设备连接信息.md
+BUILD_STATUS.md
+GOAL_PROGRESS.md
+tests/generated/
+test-results/
+*.log
+*.pklg
+*.pcap*
