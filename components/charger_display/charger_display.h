@@ -106,13 +106,14 @@ inline View make_view(const charger_event_bus::Snapshot &state, uint32_t now) {
     // Both measurements must belong to the same accepted, fresh telemetry event.
     // Setpoints never participate, and an unavailable current never becomes zero watts.
     const float power = std::isfinite(voltage) && std::isfinite(current) ? voltage * current : NAN;
-    view.add(192, -9, Font::HERO, std::isfinite(voltage) ? Ink::WHITE : Ink::MUTED, number(voltage), true);
-    view.add(232, 16, Font::POWER, state.telemetry_inferred ? Ink::AMBER : Ink::MUTED,
-        state.telemetry_inferred ? "V*" : "V", true);
-    view.add(192, 41, Font::HERO, std::isfinite(current) ? Ink::WHITE : Ink::MUTED, number(current), true);
-    view.add(232, 66, Font::POWER, Ink::MUTED, "A", true);
-    view.add(192, 99, Font::POWER, std::isfinite(power) ? Ink::WHITE : Ink::MUTED, number(power), true);
-    view.add(232, 99, Font::POWER, Ink::MUTED, "W", true);
+    const std::string watts = number(power);
+    const bool large_watts = watts.size() <= 5;
+    view.add(200, large_watts ? 3 : 37, large_watts ? Font::HERO : Font::LARGE,
+        std::isfinite(power) ? Ink::WHITE : Ink::MUTED, watts, true);
+    view.add(232, 48, Font::POWER, Ink::MUTED, "W", true);
+    view.add(8, 99, Font::POWER, state.telemetry_inferred ? Ink::AMBER : Ink::MUTED,
+        number(voltage) + (state.telemetry_inferred ? " V*" : " V"));
+    view.add(232, 99, Font::POWER, Ink::MUTED, number(current) + " A", true);
     return view;
   }
   const char *link = state.connected ? "BLE 已连接" :

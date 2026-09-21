@@ -80,8 +80,9 @@ and button check.
 
 ## Dedicated idle meter
 
-`UI_STATE.ui_mode=METER` selects a six-label page: voltage/current in 56 px
-Roboto, power and V/A/W units in 28 px. No setpoints or operation/status rows are
+`UI_STATE.ui_mode=METER` selects a four-label page: power in 76 px
+Roboto with a W unit, and voltage/current together in a 28 px footer row. Power
+strings longer than five characters use 40 px so they fit. No setpoints or operation/status rows are
 shown. An amber `V*` retains the inferred-voltage marker. The normal page gives
 the full explanation. Power is computed only from finite, declared voltage and
 current channels in the same fresh sample. Voltage-only, missing, invalid,

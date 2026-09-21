@@ -41,6 +41,9 @@ int main() {
   state.ui_mode = UiMode::METER;
   emit("lcd-meter-simulation.png", state);
   emit("lcd-meter-stale-preview.png", state, 8000);
+  state.output_voltage = 100.0f; state.output_current = 10.0f;
+  emit("lcd-meter-wide-simulation.png", state);
+  state.output_voltage = 53.8f; state.output_current = 4.9f;
   state.ui_mode = UiMode::VIEW;
   emit("lcd-stale-simulation.png", state, 8000);
   state.connected = state.connection_enabled = state.ready = false;

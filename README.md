@@ -146,11 +146,11 @@ Local feedback distinguishes **parameters refreshed**, **settings confirmed**, a
 
 ### Idle meter page
 
-With both LCD and Button enabled, **15 seconds without button activity on the home page** opens a dedicated meter: **56 px voltage and current**, with power below. It shows only the three readings and units. Any A/B press returns to the home page; the entire wake gesture is consumed, so it cannot also refresh, connect, edit, or submit. Editing, confirmation, Help, pending requests and held buttons do not switch to the meter. LCD-only builds keep the home page.
+With both LCD and Button enabled, **15 seconds without button activity on the home page** opens a dedicated meter: **76 px power as the main reading**, with voltage and current together in a smaller 28 px footer row. Longer power readings shrink to fit. It shows only the three readings and units. Any A/B press returns to the home page; the entire wake gesture is consumed, so it cannot also refresh, connect, edit, or submit. Editing, confirmation, Help, pending requests and held buttons do not switch to the meter. LCD-only builds keep the home page.
 
 Power is **live voltage × live current from the same fresh telemetry sample**, never a product of setpoints. The current voltage-only decoder leaves current and power as `--.-`. Disconnected, invalid or stale readings also become `--.-`. Amber `V*` preserves the provisional-voltage warning; return home for full BLE/data status.
 
-<img src="docs/images/lcd-meter-preview.png" width="480" alt="Idle meter layout preview: large provisional voltage, unavailable current and power">
+<img src="docs/images/lcd-meter-preview.png" width="480" alt="Idle meter layout preview: large power reading, with voltage and current together below">
 
 [All-channel meter simulation](docs/images/lcd-meter-simulation.png) demonstrates computed power using synthetic values, not device measurements.
 
