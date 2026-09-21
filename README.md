@@ -4,7 +4,7 @@
 
 A BLE charger controller built with **ESPHome 2026.9.0 and ESP-IDF**. BLE and an internal event bus form the required core. The LCD, physical buttons, LED, and standalone web interface are four independent optional modules. The web interface works without a Home Assistant server; a build without Web can still connect to the charger and read its configuration.
 
-The supported protocol uses service `FFF0`, writes to `FFF2`, and notifications from `FFF1`. A matching brand or advertised device name does not establish protocol compatibility. The main LCD view is reserved for **output voltage and current**; charging **setpoints** are shown separately in smaller text. Missing or stale output data is shown as `--.-`, never substituted with setpoints. **Live output decoding is not enabled yet**: the byte mapping and scaling still need matching protocol documentation or sufficient correlated evidence. Temperature decoding and a charging-output switch are not implemented.
+The supported protocol uses service `FFF0`, writes to `FFF2`, and notifications from `FFF1`. A matching brand or advertised device name does not establish protocol compatibility. The main LCD view is reserved for **output voltage and current**; charging **setpoints** are shown separately in smaller text. Missing or stale output data is shown as `--.-`, never substituted with setpoints. **Live voltage decoding is provisional**: `84` DATA[3:5], big-endian, divided by 10. Restart captures support this interpretation, but it has not been cross-checked against the original app or a meter. The LCD labels it `电压待核` (voltage mapping awaiting verification). **Live current decoding is deferred**; current remains `--.-` / `NA`, while current setpoint control remains available. Temperature decoding and a charging-output switch are not implemented.
 
 ## Screenshots
 
@@ -13,21 +13,21 @@ The supported protocol uses service `FFF0`, writes to `FFF2`, and notifications 
 These previews are generated from the **same C++ view model used by the firmware**. They are not hardware photographs. [The renderer](tests/render_lcd.py) uses Pillow for fonts, so individual pixels can differ from the device.
 
 <p>
-  <img src="docs/images/lcd-output-preview.png" width="320" alt="LCD output view with unavailable live measurements shown as dashes">
+  <img src="docs/images/lcd-output-preview.png" width="320" alt="LCD output view with provisional 58.8 V, current unavailable, and separate setpoints">
   <img src="docs/images/lcd-edit-preview.png" width="320" alt="LCD editing preview with a sample 58.3 V and 5.1 A draft">
   <img src="docs/images/lcd-confirm-preview.png" width="320" alt="LCD confirmation preview requiring another A hold before Apply">
   <img src="docs/images/lcd-help-preview.png" width="320" alt="LCD help page explaining the connection-only red LED and button actions">
 </p>
 
-The previews show the output view, edit, confirmation, and on-device help. The output view deliberately has no valid live sample and shows `--.-`; its smaller setpoints are example UI data. Editing and confirmation use a **58.3 V / 5.1 A sample draft**, not a captured output measurement. The Chinese header explicitly separates BLE connection from output-data availability.
+The previews show the output view, edit, confirmation, and on-device help. The output preview uses **58.8 V** as a decoder-layout example from a captured byte pattern, with current unavailable; it is not a calibrated measurement or physical LCD photograph. Editing and confirmation use a **58.3 V / 5.1 A sample draft**, not a captured output measurement. The Chinese header explicitly separates BLE connection from output-data availability.
 
-Additional UI test scenes: [synthetic live values](docs/images/lcd-live-simulation.png), [synthetic stale data](docs/images/lcd-stale-simulation.png), and [disconnected](docs/images/lcd-disconnected-preview.png). The synthetic 53.8 V / 4.9 A values exercise rendering only; they are not charger measurements.
+Additional UI test scenes: [unavailable output](docs/images/lcd-unavailable-preview.png), [synthetic live values](docs/images/lcd-live-simulation.png), [synthetic stale data](docs/images/lcd-stale-simulation.png), and [disconnected](docs/images/lcd-disconnected-preview.png). The synthetic 53.8 V / 4.9 A values exercise rendering only; they are not charger measurements.
 
 ### Web interface on the device
 
-<img src="docs/images/web-ui.png" width="702" alt="Actual ESPHome web interface showing BLE connected and ready, output decoding not implemented, and 58.4 V and 5.1 A readback setpoints">
+<img src="docs/images/web-ui.png" width="702" alt="Actual ESPHome web interface with a provisional voltage reading, current unavailable, and separate setpoints">
 
-Captured from a M5StickC Plus running the updated interface firmware after OTA. A read-only local proxy preserved the device's original page and live event data; readings were not simulated or replaced. The image is cropped to omit IP and diagnostic details. `BLE status` is **Connected (ready)**, while `Output data status` explicitly says output decoding is not implemented. Readback is **58.4 V / 5.1 A**; output fields are **NA** and `Live output valid` is **OFF**.
+Captured from a M5StickC Plus running the updated interface firmware after OTA. A read-only local proxy preserved the device's original page and live event data; readings were not simulated or replaced. The image is cropped to omit IP and diagnostic details. `BLE status` reports the link separately. `Output data status` explicitly labels the voltage mapping as inferred and current as unavailable. Readback remains **58.4 V / 5.1 A**. `Live output valid` indicates a fresh, accepted sample for the declared voltage channel; it does **not** certify calibration or make current available.
 
 ## Choose a configuration
 
@@ -94,7 +94,7 @@ Page assets are stored on the device and do not require an external CDN. Home As
 | `BLE status` | Bluetooth connected, connecting, or disconnected; independent of output decoding |
 | `Output data status` | Live, not decoded, waiting, invalid, or stale output data |
 | `Charger ready` | GATT is ready and this connection has returned its setpoints |
-| `Output voltage/current` | Live output fields; currently unavailable because the BLE output decoder is not enabled |
+| `Output voltage/current` | Voltage from the provisional status decoder; current is unavailable (not assumed zero) |
 | `Live output valid` | Whether a valid output sample is present and less than 6 seconds old |
 | `Readback set voltage/current` | Setpoints read from the charger |
 | `Target voltage/current` | Local drafts; editing does not send settings over BLE |
@@ -114,13 +114,14 @@ The normal view gives **output voltage and current** the largest type (40 px). S
 | `BLE 已连接` | The Bluetooth link is connected; this alone does not establish valid output readings |
 | `BLE 连接中` | Searching, connecting, or reconnecting |
 | `BLE 已断开` | No connection and connection attempts are disabled |
-| `实时` | A valid output sample is less than 6 seconds old |
+| `电压待核` | Live voltage from the provisional byte mapping; current is deferred |
+| `实时` | A valid sample from a non-provisional producer is less than 6 seconds old |
 | `未解码` | The link works, but output decoding is not supported yet |
 | `已过期` | A previous valid sample is at least 6 seconds old; large readings are hidden |
 
-A separate line explains initialization, unavailable/invalid data, or the latest local operation. The current BLE service retains `84` as a raw frame and does not publish a validated output measurement, so the deployed view shows `--.-` with **“通信正常，输出数据尚未解码”** (communication is working; output data has not been decoded). This is not a Bluetooth-disconnection message. A charger with no battery connected is not sufficient evidence to display a measured **0.0 A**.
+A separate line explains initialization, unavailable/invalid data, or the latest local operation. The deployed voltage decoder publishes fresh status readings with **“电压待核”** and **“电压映射待核验，电流暂缓”**. Current remains unavailable. A charger with no battery connected is not sufficient evidence to display a measured **0.0 A**.
 
-The display never substitutes setpoints for output readings. Disconnection invalidates measurements. Output decoding still needs evidence for its byte mapping and scaling; layout previews and synthetic telemetry tests do not establish that evidence. See the revision-specific [verification record](docs/verification.md).
+The display never substitutes setpoints for output readings. Disconnection invalidates measurements. The voltage mapping is an explicit inference from restart captures; cross-checking its physical accuracy remains outstanding. Layout previews and synthetic telemetry tests establish software behavior, not electrical accuracy. See the revision-specific [verification record](docs/verification.md).
 
 The screen omits IP addresses, branding, and temperature. Its bottom row shows the available button actions. The shared `charger_display` view model supplies the layout for both the device and previews.
 
@@ -171,7 +172,7 @@ Readback confirmation does not establish power-cycle persistence or actual elect
 |---|---|---|
 | Native C++ tests | Captured frame decoding; event queues, IDs and invalidation; simulated event routing for all 16 module combinations; the real BLE transaction implementation with a fake clock and GATT transport | Does not validate radio behavior, GPIO wiring, or physical display appearance |
 | ESPHome matrix | Required BLE + bus with all `2^4 = 16` LCD/Button/LED/Web combinations on M5StickC; a separate ATOMS3U build | Does not mean every combination was flashed to hardware |
-| Recorded hardware checks | Current M5StickC Plus interface: the operator confirmed the Chinese LCD, button responses, and steady red LED. Historical firmware: headless + Web and full-profile BLE reads, explicit Apply with readback, and reconnect behavior passed | ATOMS3U hardware and a new-interface physical Apply test have not been verified; button-response confirmation does not establish a settings write |
+| Recorded hardware checks | Current M5StickC Plus interface: the operator confirmed the Chinese LCD, button responses, steady red LED, and a 58.9 V decoded voltage display after charger restart. Historical firmware: headless + Web and full-profile BLE reads, explicit Apply with readback, and reconnect behavior passed | ATOMS3U hardware and a new-interface physical Apply test have not been verified; button-response confirmation does not establish a settings write |
 
 The local-controls test compiles the real button and LED adapters and checks confirmation, cancellation, input loss, and connection-only indication timing, hold/release prompts, and Help behavior. The telemetry view and Web tests use synthetic typed events to check freshness, invalidation, and presentation; they do not establish the charger's output byte mapping. The Web test compiles the real adapter for all **32 combinations of five optional telemetry/status entities**. This is separate from the **16 combinations of the four optional hardware/Web modules**.
 

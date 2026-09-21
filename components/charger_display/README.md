@@ -19,12 +19,13 @@ STALE and INVALID. A supported, valid, connected measurement younger than
 6000 ms may be shown as LIVE. Other states show `--.-` with an explicit reason,
 such as “通信正常，输出数据尚未解码”.
 
-**Real-time 84 voltage/current decoding is not yet implemented.** BLE declares
-`TELEMETRY_CAPABILITY.telemetry_supported=false`; raw status or CONFIG events cannot enable measured
-values. Therefore an otherwise connected, ready charger currently shows
-UNSUPPORTED/“未解码”. Being unloaded is not evidence of a measured zero; the
-view must not synthesize 0 V or 0 A. OutputState describes measurement availability,
-not charger output enablement.
+**The current decoder provides provisional voltage only.** Its capability
+has `telemetry_channels=1` and `telemetry_inferred=true`. Fresh voltage is shown
+in large digits with “电压待核”; current stays `--.-` and “电流暂缓 / A”.
+The reason line explains that voltage mapping awaits verification. Unknown,
+invalid, disconnected and stale samples remain unavailable. Neither setpoints
+nor an unloaded condition generate measurements. OutputState describes data
+availability, not charger output enablement.
 
 The board LED is physically red. It is steady for an actual BLE link, blinks
 500 ms on/off while connection is enabled but absent, and is off when disabled

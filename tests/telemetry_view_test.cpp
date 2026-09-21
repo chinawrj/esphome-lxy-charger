@@ -82,6 +82,7 @@ void assert_same_ble(const Snapshot &before, const Snapshot &after) {
   assert(same(after.output_voltage, before.output_voltage) && same(after.output_current, before.output_current));
   assert(after.telemetry_valid == before.telemetry_valid && after.sampled_at == before.sampled_at);
   assert(after.telemetry_supported == before.telemetry_supported && after.telemetry_seen == before.telemetry_seen);
+  assert(after.telemetry_channels == before.telemetry_channels && after.telemetry_inferred == before.telemetry_inferred);
   assert(after.raw_status_seen == before.raw_status_seen && after.raw_sampled_at == before.raw_sampled_at);
   assert(after.status == before.status && after.result == before.result);
   assert(after.raw_status == before.raw_status && after.last_request_id == before.last_request_id);
@@ -373,7 +374,29 @@ void test_observers_render_reduced_state() {
 
 }  // namespace
 
+void test_inferred_voltage_without_current() {
+  EventCore bus; connect(bus); configure(bus);
+  Event cap; cap.type = EventType::TELEMETRY_CAPABILITY; cap.telemetry_supported = true;
+  cap.telemetry_channels = 1; cap.telemetry_inferred = true; deliver(bus, cap);
+  deliver(bus, telemetry(58.8f, NAN, 1000));
+  assert(bus.snapshot().telemetry_fresh(1000));
+  assert((large_values(make_view(bus.snapshot(), 1000)) == std::vector<std::string>{"58.8", "--.-"}));
+  assert(contains(make_view(bus.snapshot(), 1000), "电压待核"));
+  assert(contains(make_view(bus.snapshot(), 1000), "电流暂缓"));
+  assert(bus.snapshot().voltage == 58.4f && bus.snapshot().current == 5.1f);
+  deliver(bus, telemetry(25.9f, 99.0f, 1001));
+  assert(std::isnan(bus.snapshot().output_current)); // Unsupported channels cannot leak through.
+  assert_unknown_output(bus.snapshot(), 7001);
+  cap.telemetry_channels = 3; cap.telemetry_inferred = false; deliver(bus, cap);
+  assert_unknown_output(bus.snapshot(), 1002);  // Changing decoder invalidates the old sample.
+  deliver(bus, telemetry(58.8f, NAN, 1002));
+  assert_unknown_output(bus.snapshot(), 1002);  // Both advertised => both required.
+  cap.telemetry_channels = 0; deliver(bus, cap);
+  assert(!bus.snapshot().telemetry_supported);
+}
+
 int main() {
+  test_inferred_voltage_without_current();
   test_config_and_requests_never_create_output();
   test_measurements_stay_separate_from_config();
   test_freshness_boundary_and_wrap();

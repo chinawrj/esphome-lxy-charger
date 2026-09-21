@@ -63,15 +63,18 @@ sample or refresh its age.
 
 `TELEMETRY` carries separate `output_voltage/output_current`, `sampled_at` and
 `telemetry_valid`. The reducer accepts a valid measurement only when connected,
-capability is enabled, the event is marked valid, and both values are finite.
+capability is enabled, the event is marked valid, and every declared channel is finite.
+`telemetry_channels` is a bitmask (1=voltage, 2=current; default 3); undeclared
+channels are always NaN. Changing channels or `telemetry_inferred` invalidates old samples.
+`telemetry_inferred` marks a provisional mapping, independently of freshness.
 Unsupported/offline samples cannot bypass the gate. Invalid samples become NaN;
 disconnect clears measurements so reconnect cannot revive them.
 
-**The current BLE service declares support false: real-time voltage/current
-mapping in the 84 response is still unimplemented.** A good raw response or a
-successful settings query cannot make measured output live. Configuration values
-must not stand in for measurements. An unloaded charger must not be assumed to
-measure 0 V / 0 A.
+**The current BLE service advertises voltage only (`channels=1`), with an
+inferred mapping.** It decodes status DATA[3:5] as big-endian tenths of a volt,
+based on restart captures, without app/meter calibration. Current remains NaN.
+Raw status and configuration events alone never create a voltage sample.
+An unloaded charger must not be assumed to measure zero current.
 
 Consumers call `snapshot.output_state(now)` or `telemetry_fresh(now)`. Freshness
 requires connected, supported, valid data younger than 6000 ms. Time is

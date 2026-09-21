@@ -235,7 +235,26 @@ void test_connection_and_decoding_status_are_separate() {
 
 }  // namespace
 
+void test_inferred_voltage_only_optional_entities() {
+  for (unsigned mask = 0; mask < 32; ++mask) {
+    Fixture f(mask); f.connect(); f.config();
+    Event cap{}; cap.type = EventType::TELEMETRY_CAPABILITY; cap.telemetry_supported = true;
+    cap.telemetry_channels = 1; cap.telemetry_inferred = true; f.emit(cap); f.tick(1000);
+    f.measure(58.8f, NAN, 1000); f.tick(1000);
+    if (mask & 1) assert(f.output_v.state == 58.8f);
+    if (mask & 2) assert(std::isnan(f.output_a.state));
+    if (mask & 4) assert(f.telemetry_valid.state); // Valid declared channel, not current support/calibration.
+    if (mask & 16) assert(f.output_status.state == "Live voltage (inferred mapping); current unavailable");
+    assert(f.configured_v.state == 58.4f && f.configured_a.state == 5.1f);
+    f.tick(7000); f.assert_unknown();
+    f.measure(0.0f, NAN, 7000);
+    if (mask & 1) assert(f.output_v.state == 0.0f);
+    f.connect(false); f.tick(7001); f.assert_unknown();
+  }
+}
+
 int main() {
+  test_inferred_voltage_only_optional_entities();
   test_boot_and_config_are_not_measurements();
   test_real_publication_stale_and_recovery();
   test_disconnect_and_late_telemetry_cannot_revive_output();

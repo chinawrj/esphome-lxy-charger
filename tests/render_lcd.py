@@ -1,7 +1,7 @@
 """Render documented LCD previews from the firmware's shared C++ view model.
 
 These are layout previews (not photos or measured charging evidence). The
-normal view deliberately has no verified live sample and therefore shows --.-.
+normal view shows a provisional voltage fixture and unavailable current.
 Font rasterization uses Pillow; coordinates, text, sizes and colors are shared
 with the actual firmware. Requires Pillow, available with ESPHome.
 """

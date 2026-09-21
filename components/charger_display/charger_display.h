@@ -87,7 +87,7 @@ inline const char *output_badge(charger_event_bus::OutputState state) {
 inline const char *output_reason(const charger_event_bus::Snapshot &state, uint32_t now) {
   using charger_event_bus::OutputState;
   switch (state.output_state(now)) {
-    case OutputState::LIVE: return "实时输出，与下方设定值独立";
+    case OutputState::LIVE: return state.telemetry_inferred ? "电压映射待核验，电流暂缓" : "实时输出，与下方设定值独立";
     case OutputState::UNSUPPORTED: return "通信正常，输出数据尚未解码";
     case OutputState::STALE: return "输出数据已过期，等待更新";
     case OutputState::INVALID: return "输出数据无效，等待更新";
@@ -147,13 +147,14 @@ inline View make_view(const charger_event_bus::Snapshot &state, uint32_t now) {
   }
   const OutputState output = state.output_state(now);
   const bool fresh = output == OutputState::LIVE;
-  view.add(232, 1, Font::SMALL, fresh ? Ink::GREEN : Ink::AMBER, output_badge(output), true);
+  view.add(232, 1, Font::SMALL, fresh && !state.telemetry_inferred ? Ink::GREEN : Ink::AMBER,
+      fresh && state.telemetry_inferred ? "电压待核" : output_badge(output), true);
   view.add(8, 23, Font::LARGE, fresh ? Ink::WHITE : Ink::MUTED,
       fresh ? number(state.output_voltage) : "--.-");
-  view.add(132, 23, Font::LARGE, fresh ? Ink::WHITE : Ink::MUTED,
+  view.add(132, 23, Font::LARGE, fresh && std::isfinite(state.output_current) ? Ink::WHITE : Ink::MUTED,
       fresh ? number(state.output_current) : "--.-");
   view.add(8, 69, Font::SMALL, Ink::MUTED, "实时电压 / V");
-  view.add(132, 69, Font::SMALL, Ink::MUTED, "实时电流 / A");
+  view.add(132, 69, Font::SMALL, Ink::MUTED, (state.telemetry_supported && !(state.telemetry_channels & 2)) ? "电流暂缓 / A" : "实时电流 / A");
   const bool failed = state.ui_notice == UiNotice::FAILED || state.ui_notice == UiNotice::UNKNOWN ||
       state.ui_notice == UiNotice::CONNECT_FAILED;
   const char *notice = notice_text(state.ui_notice);

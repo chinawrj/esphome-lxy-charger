@@ -89,7 +89,31 @@ struct Fixture {
 };
 
 int main() {
-  { // Setup advertises missing decoding; enabling BLE is not a physical link.
+  { // Independent captured restart fixtures: output differs from 58.4 V setpoint.
+    Fixture f;
+    for (const auto raw : {0u, 1u, 259u, 587u, 588u, 589u, 590u}) {
+      std::vector<uint8_t> data(15, 0);
+      data[3] = raw >> 8; data[4] = raw & 255;
+      data[10] = 32; data[11] = 34; data[12] = raw >= 587;
+      f.tick(1000); f.notify(0x84, data);
+      assert(f.bus.snapshot().output_voltage == raw / 10.0f);
+      assert(std::isnan(f.bus.snapshot().output_current));
+      assert(f.bus.snapshot().telemetry_inferred && f.bus.snapshot().telemetry_channels == 1);
+    }
+    f.notify(0x84, std::vector<uint8_t>(14, 0));  // Exact status layout required.
+    assert(!f.bus.snapshot().telemetry_valid && std::isnan(f.bus.snapshot().output_voltage));
+    std::vector<uint8_t> data(15, 0); data[3] = 0xff; data[4] = 0xff;
+    f.notify(0x84, data);  // Out of this variant's decoder plausibility envelope.
+    assert(!f.bus.snapshot().telemetry_valid);
+    uint8_t captured[] = {0x5e,0x5e,0x11,0x84,0,0,0,2,0x4c,0,0,0,0,0,0x20,0x22,1,0,0,0xd8};
+    float voltage = NAN;
+    assert(protocol::decodeStatusVoltage(captured, sizeof(captured), voltage) && voltage == 58.8f);
+    captured[8] ^= 1;
+    assert(!protocol::decodeStatusVoltage(captured, sizeof(captured), voltage));
+    assert(!protocol::decodeStatusVoltage(captured, 19, voltage));
+  }
+
+  { // Setup advertises inferred voltage only; enabling BLE is not a physical link.
     fake_millis = 0;
     native_writes.clear();
     native_write_result = ESP_OK;
@@ -106,12 +130,14 @@ int main() {
     for (unsigned i = 0; i < 8; ++i) bus.loop();
     assert(!charger.is_failed());
     assert(!bus.snapshot().connected && !bus.snapshot().connection_enabled);
-    assert(!bus.snapshot().telemetry_supported && !bus.snapshot().telemetry_valid);
+    assert(bus.snapshot().telemetry_supported && !bus.snapshot().telemetry_valid);
+    assert(bus.snapshot().telemetry_channels == 1 && bus.snapshot().telemetry_inferred);
     unsigned capabilities = 0;
     for (const auto &event : events) {
       if (event.type == EventType::TELEMETRY_CAPABILITY) {
         ++capabilities;
-        assert(event.source == "ble" && !event.telemetry_supported);
+        assert(event.source == "ble" && event.telemetry_supported);
+        assert(event.telemetry_channels == 1 && event.telemetry_inferred);
       }
       assert(event.type != EventType::TELEMETRY);
     }
@@ -125,23 +151,23 @@ int main() {
     charger.establish();
     for (unsigned i = 0; i < 8; ++i) bus.loop();
     assert(bus.snapshot().connected && bus.snapshot().ready);
-    assert(bus.snapshot().output_state(0) == OutputState::UNSUPPORTED);
+    assert(bus.snapshot().output_state(0) == OutputState::WAITING);
     assert(bus.request(EventType::REQUEST_DISCONNECT, "test") != 0);
     for (unsigned i = 0; i < 8; ++i) bus.loop();
     assert(!client.enabled && !bus.snapshot().connection_enabled && !bus.snapshot().connected);
     assert(native_writes.empty());
   }
-  { // A raw sample keeps its RX timestamp, never publishes guessed output values.
+  { // A status sample retains its RX time and publishes voltage only, never a guessed current.
     Fixture f;
-    assert(f.bus.snapshot().output_state(0) == OutputState::UNSUPPORTED);
+    assert(f.bus.snapshot().output_state(0) == OutputState::WAITING);
     f.tick(2000);
     const auto id = f.request(EventType::REQUEST_READ_CONFIG);
     f.tick(2120);
     f.status();
     assert(f.bus.snapshot().raw_status_seen && f.bus.snapshot().raw_sampled_at == 2120);
-    assert(!f.bus.snapshot().telemetry_valid && !f.bus.snapshot().telemetry_seen);
-    assert(std::isnan(f.bus.snapshot().output_voltage) && std::isnan(f.bus.snapshot().output_current));
-    assert(f.bus.snapshot().output_state(2120) == OutputState::UNSUPPORTED);
+    assert(f.bus.snapshot().telemetry_valid && f.bus.snapshot().telemetry_seen);
+    assert(f.bus.snapshot().output_voltage == 0.0f && std::isnan(f.bus.snapshot().output_current));
+    assert(f.bus.snapshot().output_state(2120) == OutputState::LIVE);
     assert(f.commands() == std::vector<uint8_t>{4});
     f.tick(2320);
     assert((f.commands() == std::vector<uint8_t>{4, 2}));
@@ -150,7 +176,9 @@ int main() {
     assert(f.bus.snapshot().raw_sampled_at == 2120);
     unsigned raw_samples = 0;
     for (const auto &event : f.events) {
-      assert(event.type != EventType::TELEMETRY);
+      if (event.type == EventType::TELEMETRY) {
+        assert(event.telemetry_valid && event.output_voltage == 0.0f && std::isnan(event.output_current));
+      }
       if (event.type == EventType::RAW_STATUS) {
         ++raw_samples;
         assert(event.source == "ble" && event.sampled_at == 2120);
@@ -162,7 +190,7 @@ int main() {
     assert(f.bus.snapshot().connection_enabled);  // Unexpected link loss keeps reconnect intent.
     f.charger.establish(); f.drain();
     assert(!f.bus.snapshot().raw_status_seen);
-    assert(f.bus.snapshot().output_state(2400) == OutputState::UNSUPPORTED);
+    assert(f.bus.snapshot().output_state(2400) == OutputState::WAITING);
   }
   { // Reproduce the observed 04 / (120 ms) READ / 84 sequence.
     Fixture f;

@@ -4,7 +4,7 @@
 
 基于 **ESPHome 2026.9.0 + ESP-IDF** 的 LXY BLE 充电器控制器。BLE 与事件总线是必选核心，LCD、实体按键、LED、独立网页是四个可选模块。使用网页时不需要 Home Assistant 服务器；不选网页时，BLE 仍可独立连接并读取参数。
 
-项目支持已验证的 `FFF0` 服务、`FFF2` 写入、`FFF1` 通知协议。相同品牌或设备名称不代表协议一定兼容。LCD 主区域用于显示**输出电压、电流**，**充电设定值**以较小字体单独显示。输出数据缺失或过期时显示 `--.-`，绝不用设定值代替测量值。**当前尚未启用实时输出解码**：字节映射与缩放仍需匹配的协议资料或充分对照证据验证；尚未实现温度解析或充电输出开关。
+项目支持已验证的 `FFF0` 服务、`FFF2` 写入、`FFF1` 通知协议。相同品牌或设备名称不代表协议一定兼容。LCD 主区域用于显示**输出电压、电流**，**充电设定值**以较小字体单独显示。输出数据缺失或过期时显示 `--.-`，绝不用设定值代替测量值。**已启用推定的实时电压解析**：`84` 的 DATA[3:5] 按大端整数除以 10。重启抓包支持这一解释，但尚未与原小程序或万用表交叉核验，屏幕标注“电压待核”。**实时电流解码按用户要求暂缓**，保持 `--.-` / `NA`，设定电流调节仍可用。尚未实现温度解析或充电输出开关。
 
 ## 界面截图
 
@@ -13,21 +13,21 @@
 下列预览由**与固件相同的 C++ 视图模型**生成，**不是硬件照片**。[渲染工具](tests/render_lcd.py) 使用 Pillow 绘制字体，个别像素可能与设备不同。
 
 <p>
-  <img src="docs/images/lcd-output-preview.png" width="320" alt="LCD输出页预览：无有效实时数据时显示横线">
+  <img src="docs/images/lcd-output-preview.png" width="320" alt="LCD输出页预览：推定电压58.8 V、电流暂缓、设定值独立显示">
   <img src="docs/images/lcd-edit-preview.png" width="320" alt="LCD编辑页预览：58.3 V和5.1 A示例草稿">
   <img src="docs/images/lcd-confirm-preview.png" width="320" alt="LCD确认页预览：需要再次长按A才提交">
   <img src="docs/images/lcd-help-preview.png" width="320" alt="LCD帮助页：说明红灯只表示连接及按键操作">
 </p>
 
-依次为输出页、编辑页、确认页和设备内帮助页。输出页特意不提供有效实时样本，因此显示 `--.-`；较小的设定值属于示例界面数据。编辑与确认采用 **58.3 V / 5.1 A 示例草稿**，不是实际输出测量截图。中文顶栏分别说明 BLE 连接状况与输出数据状态。
+依次为输出页、编辑页、确认页和设备内帮助页。输出页使用抓包字节对应的 **58.8 V** 作为解析布局示例，电流保持未知；这不是经校准的实测值，也不是实体 LCD 照片。编辑与确认采用 **58.3 V / 5.1 A 示例草稿**，不是实际输出测量截图。中文顶栏分别说明 BLE 连接状况与输出数据状态。
 
-其他界面测试场景：[合成实时值](docs/images/lcd-live-simulation.png)、[合成过期数据](docs/images/lcd-stale-simulation.png)、[断开连接](docs/images/lcd-disconnected-preview.png)。合成的 53.8 V / 4.9 A 仅用于测试显示，不是充电器实测结果。
+其他界面测试场景：[数据不可用](docs/images/lcd-unavailable-preview.png)、[合成实时值](docs/images/lcd-live-simulation.png)、[合成过期数据](docs/images/lcd-stale-simulation.png)、[断开连接](docs/images/lcd-disconnected-preview.png)。合成的 53.8 V / 4.9 A 仅用于测试显示，不是充电器实测结果。
 
 ### 实机 Web 界面
 
-<img src="docs/images/web-ui.png" width="702" alt="实机ESPHome网页：BLE已连接且就绪，明确说明输出解码尚未实现，回读设定58.4 V和5.1 A">
+<img src="docs/images/web-ui.png" width="702" alt="实机ESPHome网页：推定电压、电流未知、设定值独立显示">
 
-截图来自 OTA 后运行新版界面固件的 M5StickC Plus。只读本地代理保留设备原始页面与实时事件数据，未模拟或替换读数；图片仅裁去 IP 等诊断信息。`BLE status` 为 **Connected (ready)**，`Output data status` 则明确说明输出解码尚未实现。设定回读为 **58.4 V / 5.1 A**，输出字段为 **NA**，`Live output valid` 为 **OFF**。
+截图来自 OTA 后运行新版界面固件的 M5StickC Plus。只读本地代理保留设备原始页面与实时事件数据，未模拟或替换读数；图片仅裁去 IP 等诊断信息。`BLE status` 单独报告连接状态，`Output data status` 明确标注电压映射为推定、电流不可用。设定回读仍为 **58.4 V / 5.1 A**。`Live output valid` 仅表示所声明的电压通道样本有效且未过期，不代表已经校准，也不代表电流可用。
 
 ## 选择配置
 
@@ -92,7 +92,7 @@ esphome logs esp32-headless.yaml --device /dev/cu.YOUR_PORT
 | `BLE status` | 蓝牙已连接、连接中或断开，与输出解码独立 |
 | `Output data status` | 输出数据实时、未解码、等待、无效或过期 |
 | `Charger ready` | GATT 已就绪，并已取得本次连接的设定值 |
-| `Output voltage/current` | 实时输出字段；BLE 输出解码尚未启用，当前不可用 |
+| `Output voltage/current` | 电压来自推定的状态解析；电流未知，不按空载推断为零 |
 | `Live output valid` | 是否存在不足 6 秒的有效输出样本 |
 | `Readback set voltage/current` | 设备回读的设定值 |
 | `Target voltage/current` | 本地草稿，编辑不会向 BLE 发送设置 |
@@ -112,13 +112,14 @@ esphome logs esp32-headless.yaml --device /dev/cu.YOUR_PORT
 | `BLE 已连接` | 蓝牙链路已经建立，但不代表输出读数一定可用 |
 | `BLE 连接中` | 正在搜索、连接或重连 |
 | `BLE 已断开` | 当前无连接，且连接尝试已关闭 |
-| `实时` | 存在不足 6 秒的有效输出样本 |
+| `电压待核` | 显示推定映射解析的实时电压，电流暂缓 |
+| `实时` | 非推定数据源提供不足 6 秒的有效样本 |
 | `未解码` | 链路可用，但尚未支持输出数据解码 |
 | `已过期` | 之前的有效样本已达到 6 秒，隐藏旧的大数字 |
 
-另有一行解释初始化、数据不可用/无效或最近的本地操作结果。当前 BLE 服务只保留原始 `84` 帧，不发布已确认的输出测量，所以实际运行时显示 `--.-`，并明确注明**“通信正常，输出数据尚未解码”**。这不是蓝牙断连提示。充电器没有接电池、处于空载，并不足以证明实测电流是 **0.0 A**。
+另有一行解释初始化、数据不可用/无效或最近的本地操作结果。当前电压解码器显示新鲜状态读数，同时标注**“电压待核”**和**“电压映射待核验，电流暂缓”**。电流仍未知；空载并不足以证明实测电流是 **0.0 A**。
 
-界面绝不用设定值代替输出读数，断连后会使测量值失效。输出字节映射与缩放仍需证据验证；布局预览和合成遥测测试不构成协议验证，具体见对应版本的[验证记录](docs/verification.md)。
+界面绝不用设定值代替输出读数，断连后会使测量值失效。电压字节映射是依据重启抓包的明确推定，物理准确性尚待交叉核验；布局预览和合成遥测测试只验证软件行为，具体见对应版本的[验证记录](docs/verification.md)。
 
 屏幕不放置 IP、品牌或温度，底部显示当前可用的按键动作。设备与预览共享 `charger_display` 视图模型。
 

@@ -1,19 +1,35 @@
 # Verification record
 
-## v2.1 development checkpoint — 2026-09-21
+## v2.1 voltage decoder and local controls — 2026-09-21
+
+The operator deferred live-current decoding until a later battery test, declined further mini-program use, and requested implementation from the new restart data. This revision decodes **voltage only**, with an explicit inferred-mapping label. It does not certify electrical accuracy. Current remains unavailable; current setpoint control is unchanged.
+
+- Native tests passed for the real BLE parser/transaction service, event core, display, Button/LED wrappers and Web adapter. Captured restart bytes exercise 0.0/0.1/25.9/58.7–59.0 V. Tests reject wrong lengths, damaged checksums and out-of-envelope values; cover channel masks, discarded unsupported current values, capability changes, stale/offline data, and all 32 optional Web-entity combinations.
+- All **16/16** module combinations passed YAML validation, full ESP-IDF compilation, included-component checks and byte-for-byte source-copy checks. [Current matrix](test-matrix.json): `voltage-restart-20260921T094715Z-7bac925a9f60`. Independent generic ESP32, ATOMS3U and full M5StickC Plus builds passed. ATOMS3U is compile-only.
+- The final full profile was installed on the original M5StickC Plus 1.1 through successful OTA, configuration hash `0x388b6511`. No charger-setting write was sent for this decoder update.
+- After the operator restarted the charger again, the device reconnected automatically. A 180-second read-only Web observation recorded **131 polls**. Among **106 ready/valid observations bracketed by identical raw frames, 106 matched** the voltage formula and kept current unavailable; no checked mismatch occurred. Observed decoded values included 0.0, 44.2, 58.7, 58.8, 58.9 and 59.0 V. Changing frames were excluded from comparison because the HTTP reads are sequential. These are software-path checks, not independent voltage measurements.
+- The operator explicitly reported **58.9 V on the physical LCD** after the second restart. Earlier in this revision cycle the operator confirmed the Chinese display, button responses and steady red LED. This does not claim a new physical Button Apply exercise; explicit setting writes/readback were exercised in the historical baseline below.
+- The [current Web screenshot](images/web-ui.png) shows the running decoder, **58.9 V**, current **NA**, and separate **58.4 V / 5.1 A** setpoints. A GET-only local proxy preserved the original device HTML and live SSE values; only the diagnostics area was cropped. The eight LCD images are shared-view-model renders, not hardware photographs or calibration evidence. All text bounds and bundled glyph checks passed.
+- The voltage mapping remains provisional (`84` DATA[3:5], big-endian / 10), clearly indicated on LCD and Web. [Protocol evidence and limits](protocol.md) distinguish captured facts from inference. Current, temperature, output-switch decoding, wider setpoint ranges and absolute electrical accuracy remain outside this release's verified scope.
+
+The previously completed GitHub run [35583676928](https://github.com/chinawrj/esphome-lxy-charger/actions/runs/35583676928) passed 18/18 jobs for **5138d93**, the preceding UE checkpoint. It is not evidence for this newer voltage decoder; the new revision's CI is recorded separately when complete.
+
+---
+
+## Historical v2.1 UE checkpoint before voltage decoding — 2026-09-21
 
 This checkpoint adds the local button editor, Chinese LCD status/help views, a connection-only LED indicator and separate live-output display/event interfaces. **It is not a completed live-telemetry release:** the BLE `84` output V/A mapping is still unverified and the decoder is not enabled. The operator reports an unloaded charger with no battery connected; that does not identify which zero-valued payload fields represent output measurements. No public v2.1 release has been made at this checkpoint.
 
 - Native tests passed for the real event reducer and display view, physical-button controller and ESPHome wrapper, independent LED controller/wrapper, and real Web component. The Web tests cover all **32** combinations of its five optional live-output/status entities; this is separate from the 16 module combinations.
 - Regression coverage includes disabled telemetry capability rejecting late samples, all seven output-data states, raw replies not renewing measurement freshness, timer wraparound, connection intent versus actual connection, HELP and release-to-confirm controls, and a pending request finishing during a held button gesture.
 - Protocol decoder and BLE request-serialization regressions passed; UI events do not modify BLE readiness, busy state or transaction correlation.
-- All **16/16** optional module combinations passed YAML validation and complete ESP-IDF compilation. Custom C++/header copies match the final tested sources byte-for-byte, and compiled units match the selected modules. See [test-matrix.json](test-matrix.json), run `ue-connection-20260921T092250Z-bb412cea9f5a`. Its source manifest also covers the bundled UI fonts and glyph inventory.
+- All **16/16** optional module combinations passed YAML validation and complete ESP-IDF compilation. Custom C++/header copies match the final tested sources byte-for-byte, and compiled units match the selected modules. See the [archived UE matrix](https://github.com/chinawrj/esphome-lxy-charger/blob/5138d9323c1fe8d32463fc1559fb2f26d110c1e2/docs/test-matrix.json), run `ue-connection-20260921T092250Z-bb412cea9f5a`. Its source manifest also covers the bundled UI fonts and glyph inventory.
 - Separate generic ESP32 headless, ATOMS3U and full M5StickC Plus builds passed. ATOMS3U remains compile-only.
 - The final UE full profile was installed successfully on the original M5StickC Plus 1.1 using OTA (build configuration hash `0x0628ffed`). Authenticated read-only Web checks after installation reported `Connected (ready)`, `BLE connected; output decoding not implemented`, ready=true and unchanged readback **58.4 V / 5.1 A**. Measured output values were unavailable, as expected while decoding is disabled. This verification did not change charger parameters.
-- The [Web screenshot](images/web-ui.png) is from that running UE firmware, through a GET-only local proxy serving unmodified device HTML/JavaScript and live SSE data. Cropping excludes the network diagnostics. All seven LCD images are shared-view-model renders, **not physical photos or electrical measurement evidence**. Their text bounds and bundled Chinese glyph coverage passed automated checks. LIVE/STALE examples use explicitly synthetic measurements.
+- That checkpoint had a read-only Web snapshot and seven shared-view-model renders. The current images linked above supersede them after the voltage-decoder update; no old image is presented as current evidence.
 - After this OTA installation the operator confirmed the revised Chinese LCD, button response and steady red LED. This is a user-reported physical observation, separate from the automated view/controller checks; it does not establish a new physical Apply-and-readback exercise or measured-output decoding. The fixed red LED now encodes only the BLE connection: steady when connected, slow blinking while connection is enabled but disconnected, off when disabled/disconnected. Blinking/off transitions have automated coverage but have not been independently reported by the operator. The LED does not indicate charging output or measurement validity.
 
-The current matrix report refers to this development source, while the historical CI and physical setpoint exercise below refer specifically to v2.0.0.
+This historical checkpoint used its own archived matrix. The current matrix report refers to the newer voltage-decoder source above; the physical setpoint exercise below refers specifically to v2.0.0.
 
 ---
 

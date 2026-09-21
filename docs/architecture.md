@@ -56,7 +56,7 @@ flowchart LR
 | `RAW_STATUS` | BLE | 保留尚未解码的原始状态帧；不推断测量值 |
 | `INPUT` | Button GPIO、Web | 输入动作或草稿反馈；不覆盖 BLE 事务忙碌状态，本身不直接写设备 |
 | `NETWORK_STATE` | 可选网络模块 | 更新或清空 IP 地址 |
-| `TELEMETRY_CAPABILITY` | BLE / 经验证的测量适配器 | 显式声明 `telemetry_supported`；关闭能力时清除测量值 |
+| `TELEMETRY_CAPABILITY` | BLE / 经验证的测量适配器 | 显式声明 `telemetry_supported`、通道位掩码与映射置信度；关闭能力或更换通道时清除测量值 |
 | `TELEMETRY` | 经验证的测量适配器 | 只有已连接且声明支持时才接受有效、有限的 `output_voltage/current`；不改配置 |
 | `UI_DISPLAY` | LCD | 每次绘制发布可用性；Button 在 3 秒无心跳后禁止编辑/提交 |
 | `UI_CONTROLS` | Button | 声明本地按键可用性；LCD-only 不提示不存在的按键 |
@@ -81,9 +81,9 @@ flowchart LR
 
 `connection_enabled` 表示本机 BLE client 是否启用了连接；`connected` 表示实际链路是否存在。自动连接启用但尚未连上时，两者分别为 true/false。`ready` 表示 GATT 通知可用且已完成配置回读；`busy` 表示前台事务正在处理。连接成功、协议就绪和读到实时测量不能互相替代。
 
-`voltage/current` 始终是配置设定值。实际输出使用独立的 `output_voltage/output_current`。`TELEMETRY_CAPABILITY` 必须先声明支持，随后有效的 `TELEMETRY` 才能提供测量；声明能力本身不生成样本，也不刷新样本时间。关闭能力或断连会清空有效测量，重新连接不会恢复旧样本。原始 `84` 回包只更新 `RAW_STATUS` 和其接收时间，不能绕过能力门槛。
+`voltage/current` 始终是配置设定值。实际输出使用独立的 `output_voltage/output_current`。`TELEMETRY_CAPABILITY` 必须先声明支持，随后有效的 `TELEMETRY` 才能提供测量；声明能力本身不生成样本，也不刷新样本时间。关闭能力或断连会清空有效测量，重新连接不会恢复旧样本。`RAW_STATUS` 事件只更新原始帧和接收时间，不能绕过能力门槛；BLE 解析器另行发布类型化 `TELEMETRY`。
 
-**当前 `84` 的实时电压、电流解码仍未实现。** BLE 启动时明确发布 `telemetry_supported=false`。正常连接并读回设定值后，输出区域应说明“未解码”，数值为 `--.-`；Web 的测量实体为 `NaN`。不能用设定值代替输出，也不能因为设备空载就推断为 0 V / 0 A。
+**当前只解析推定的电压通道。** BLE 启动时发布 `telemetry_supported=true`、`telemetry_channels=1`、`telemetry_inferred=true`。通道位 1 为电压，位 2 为电流；有效样本必须包含所有已声明通道的有限数值，未声明通道强制为 `NaN`。电压来自 `84` DATA[3:5] 大端整数除以 10，LCD 标注“电压待核”，Web 状态注明 inferred。电流解析按用户要求暂缓；绝不因空载推断为零。协议依据与未核验范围见 [协议说明](protocol.md)。
 
 `snapshot.output_state(now)` 按下列顺序分类。这是测量数据的可用性，不是充电输出开关状态：
 
@@ -154,7 +154,7 @@ if (id == 0) {
 
 ## LCD、按钮与 LED 的独立性
 
-正常页大字只读取受能力和时效检查保护的实际测量；小字“设定”只读取 `CONFIG`。没有有效测量时显示具体原因，例如初始化、未解码、等待首样本或过期，而不会把 `--.-` 暗示成 BLE 未连接。顶部链路文字直接使用 `connected/connection_enabled`。实时解码尚未实现，因此当前已就绪设备仍会显示“通信正常，输出数据尚未解码”。
+正常页大字只读取受能力和时效检查保护的实际测量；小字“设定”只读取 `CONFIG`。没有有效测量时显示具体原因，例如初始化、未解码、等待首样本或过期，而不会把 `--.-` 暗示成 BLE 未连接。顶部链路文字直接使用 `connected/connection_enabled`。当前电压来自推定的映射，故已就绪设备显示“电压待核”，电流保持未知并注明暂缓。
 
 按钮只通过事件获知 LCD 存在，不引用 display ID。LCD 的 250 ms 绘制回调根据电源初始化和组件状态发布 `UI_DISPLAY`；按钮按接收时间实施 3 秒心跳失效检查。没有 LCD 时仍可选择字段、连接和只读刷新，但不能编辑、提交或进入不可见的帮助页。
 

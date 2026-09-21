@@ -47,6 +47,8 @@ struct Event {
   uint32_t sampled_at{0};
   bool telemetry_valid{false};
   bool telemetry_supported{false};
+  uint8_t telemetry_channels{3};  // bit 0: voltage, bit 1: current
+  bool telemetry_inferred{false};  // Mapping inferred from frames, not cross-checked.
   UiMode ui_mode{UiMode::VIEW};
   UiNotice ui_notice{UiNotice::NONE};
   UiHold ui_hold{UiHold::NONE};
@@ -70,6 +72,8 @@ struct Snapshot {
   uint32_t sampled_at{0};
   bool telemetry_valid{false};
   bool telemetry_supported{false};
+  uint8_t telemetry_channels{3};
+  bool telemetry_inferred{false};
   bool ui_display_ready{false};
   bool ui_buttons_ready{false};
   UiMode ui_mode{UiMode::VIEW};
@@ -221,18 +225,22 @@ class EventCore {
         this->snapshot_.ip_address = event.connected ? event.message : std::string{};
         break;
       case EventType::TELEMETRY_CAPABILITY:
-        this->snapshot_.telemetry_supported = event.telemetry_supported;
-        if (!event.telemetry_supported) {
+        if (!event.telemetry_supported || this->snapshot_.telemetry_channels != (event.telemetry_channels & 3) ||
+            this->snapshot_.telemetry_inferred != event.telemetry_inferred) {
           this->snapshot_.telemetry_valid = this->snapshot_.telemetry_seen = false;
           this->snapshot_.output_voltage = this->snapshot_.output_current = NAN;
         }
+        this->snapshot_.telemetry_channels = event.telemetry_channels & 3;
+        this->snapshot_.telemetry_supported = event.telemetry_supported && this->snapshot_.telemetry_channels != 0;
+        this->snapshot_.telemetry_inferred = event.telemetry_inferred;
         break;
       case EventType::TELEMETRY:
         this->snapshot_.telemetry_seen = this->snapshot_.connected && this->snapshot_.telemetry_supported;
         this->snapshot_.telemetry_valid = this->snapshot_.connected && this->snapshot_.telemetry_supported && event.telemetry_valid &&
-            std::isfinite(event.output_voltage) && std::isfinite(event.output_current);
-        this->snapshot_.output_voltage = this->snapshot_.telemetry_valid ? event.output_voltage : NAN;
-        this->snapshot_.output_current = this->snapshot_.telemetry_valid ? event.output_current : NAN;
+            (!(this->snapshot_.telemetry_channels & 1) || std::isfinite(event.output_voltage)) &&
+            (!(this->snapshot_.telemetry_channels & 2) || std::isfinite(event.output_current));
+        this->snapshot_.output_voltage = this->snapshot_.telemetry_valid && (this->snapshot_.telemetry_channels & 1) ? event.output_voltage : NAN;
+        this->snapshot_.output_current = this->snapshot_.telemetry_valid && (this->snapshot_.telemetry_channels & 2) ? event.output_current : NAN;
         this->snapshot_.sampled_at = event.sampled_at;
         break;
       case EventType::UI_DISPLAY:

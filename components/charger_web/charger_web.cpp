@@ -41,7 +41,9 @@ void ChargerWeb::loop() {
     case OutputState::INITIALIZING: output = "BLE connected; initializing"; break;
     case OutputState::UNSUPPORTED: output = "BLE connected; output decoding not implemented"; break;
     case OutputState::WAITING: output = "Waiting for first output sample"; break;
-    case OutputState::LIVE: output = "Live measured output"; break;
+    case OutputState::LIVE:
+      output = state.telemetry_inferred ? "Live voltage (inferred mapping); current unavailable" : "Live measured output";
+      break;
     case OutputState::STALE: output = "Output sample expired"; break;
     case OutputState::INVALID: output = "Invalid output sample"; break;
     default: break;

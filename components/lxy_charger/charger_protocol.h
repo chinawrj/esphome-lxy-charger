@@ -11,6 +11,23 @@ inline uint16_t readU16(const uint8_t* p) {
     return (static_cast<uint16_t>(p[0]) << 8) | p[1];
 }
 
+// Provisional mapping from this charger's unloaded restart capture: DATA[3:5]
+// traversed 0000/0001, 0103, 024B..024E independently of its 584 setpoint.
+// Not calibrated against an external meter/app. No current or flags inferred.
+inline bool decodeStatusVoltage(const uint8_t *frame, size_t size, float &voltage) {
+    if (size != 20 || frame[0] != 0x5E || frame[1] != 0x5E || frame[2] != 17 || frame[3] != 0x84)
+        return false;
+    uint8_t checksum = 0;
+    for (size_t i = 2; i < size; ++i) checksum ^= frame[i];
+    if (checksum != 0) return false;
+    const uint16_t raw = readU16(frame + 7);
+    // Plausibility guard for the captured 58.4 V variant, not a device rating.
+    // Reject, never clamp, values outside 0..100 V pending further evidence.
+    if (raw > 1000) return false;
+    voltage = raw / 10.0f;
+    return true;
+}
+
 inline size_t encode(uint8_t command, const uint8_t* payload,
                      size_t payloadSize, uint8_t* output) {
     if (payloadSize > 253) return 0;

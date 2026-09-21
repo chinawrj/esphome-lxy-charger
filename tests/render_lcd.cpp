@@ -18,6 +18,10 @@ int main() {
   state.current = 5.1f;
   state.ui_voltage = 58.3f;
   state.ui_current = 5.1f;
+  emit("lcd-unavailable-preview.png", state);
+  state.telemetry_supported = state.telemetry_valid = state.telemetry_seen = true;
+  state.telemetry_channels = 1; state.telemetry_inferred = true; state.sampled_at = 1000;
+  state.output_voltage = 58.8f;
   emit("lcd-output-preview.png", state);
   state.ui_mode = UiMode::EDIT;
   emit("lcd-edit-preview.png", state);
@@ -28,6 +32,7 @@ int main() {
   state.ui_mode = UiMode::VIEW;
   state.telemetry_supported = state.telemetry_valid = state.telemetry_seen = true;
   state.sampled_at = 1000;
+  state.telemetry_channels = 3; state.telemetry_inferred = false;
   state.output_voltage = 53.8f;
   state.output_current = 4.9f;
   emit("lcd-live-simulation.png", state);

@@ -22,7 +22,9 @@ void LXYCharger::setup() {
   }
   Event capability{};
   capability.type = EventType::TELEMETRY_CAPABILITY;
-  capability.telemetry_supported = false;  // 84 V/A mapping has not been verified.
+  capability.telemetry_supported = true;
+  capability.telemetry_channels = 1;  // Voltage only; current decoding deferred.
+  capability.telemetry_inferred = true;
   this->publish_(capability);
   this->publish_connection_();
   this->publish_status_("Disconnected; settings are never applied automatically");
@@ -298,6 +300,11 @@ void LXYCharger::handle_frame_(const uint8_t *frame, size_t size) {
     event.sampled_at = millis();
     event.message = hex_(frame, size);
     this->publish_(event);
+    Event output{};
+    output.type = EventType::TELEMETRY;
+    output.sampled_at = event.sampled_at;
+    output.telemetry_valid = protocol::decodeStatusVoltage(frame, size, output.output_voltage);
+    this->publish_(output);
     return;
   }
   if (size != 10 || frame[4] != 0x01 || (command != 0x82 && command != 0x83)) return;
