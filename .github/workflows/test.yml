@@ -27,6 +27,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python tests/test_event_core.py
       - run: python components/lxy_charger/test_protocol.py
+      - run: python tests/test_ble_serialization.py
       - run: python tests/matrix.py --mode validate --jobs 2
 
   module-matrix:

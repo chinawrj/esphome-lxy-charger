@@ -48,7 +48,12 @@ bool LXYCharger::publish_(Event event) {
   // stop further writes and retry only the invalidation notice from loop().
   // This never retries the charger command itself.
   ESP_LOGE(TAG, "Critical event queue overflow; disabling BLE without replay");
-  this->overflow_request_id_ = event.request_id ? event.request_id : this->active_request_id_;
+  const uint32_t pending_id = this->active_request_id_ ? this->active_request_id_ : this->connection_request_id_;
+  this->overflow_request_id_ = pending_id ? pending_id : event.request_id;
+  this->overflow_result_ = this->deferred_request_pending_ || event.result == Result::FAILED ? Result::FAILED : Result::UNKNOWN;
+  if (event.request_id && event.request_id != this->overflow_request_id_ &&
+      this->overflow_rejected_count_ < this->overflow_rejected_requests_.size())
+    this->overflow_rejected_requests_[this->overflow_rejected_count_++] = event.request_id;
   this->overflow_pending_ = true;
   this->overflow_connection_sent_ = false;
   this->overflow_status_sent_ = false;
@@ -71,10 +76,11 @@ void LXYCharger::publish_status_(const char *message, Result result, uint32_t re
   this->publish_(event);
 }
 
-void LXYCharger::publish_connection_(uint32_t request_id) {
+void LXYCharger::publish_connection_(uint32_t request_id, Result result) {
   Event event{};
   event.type = EventType::CONNECTION;
   event.request_id = request_id;
+  event.result = result;
   event.connected = this->link_connected_;
   event.ready = this->ready_();
   event.busy = this->busy_();
@@ -97,6 +103,17 @@ void LXYCharger::on_event_(const Event &event) {
   }
   if (this->busy_()) {
     this->publish_status_("Request rejected: another transaction is pending", Result::REJECTED, event.request_id);
+    return;
+  }
+  if (this->status_poll_pending_ &&
+      (event.type == EventType::REQUEST_READ_CONFIG || event.type == EventType::REQUEST_APPLY_CONFIG)) {
+    // Preserve one immutable request while the already-sent 04 awaits 84.
+    // Do not dispatch inside the notification callback: loop() drains it once.
+    this->deferred_request_ = event;
+    this->deferred_request_pending_ = true;
+    this->active_request_id_ = event.request_id;
+    this->publish_status_("Request queued; waiting for background status reply before sending",
+                          Result::ACCEPTED, event.request_id);
     return;
   }
   switch (event.type) {
@@ -146,6 +163,9 @@ void LXYCharger::reset_link_state_() {
   this->subscribe_pending_ = false;
   this->initial_query_due_ = false;
   this->query_pending_ = false;
+  this->status_poll_pending_ = false;
+  this->deferred_request_pending_ = false;
+  this->deferred_request_ = Event{};
   this->set_pending_ = false;
   this->echo_received_ = false;
   this->readback_sent_ = false;
@@ -156,9 +176,14 @@ void LXYCharger::reset_link_state_() {
 
 void LXYCharger::invalidate_link_(const char *reason, Result result) {
   const uint32_t request_id = this->active_request_id_ ? this->active_request_id_ : this->connection_request_id_;
+  if (this->deferred_request_pending_) {
+    ESP_LOGW(TAG, "Discarding unsent request %lu: %s", (unsigned long) request_id, reason);
+    reason = "Pending request failed before send; reconnecting without replay";
+    result = Result::FAILED;
+  }
   this->reset_link_state_();
   this->preserve_disconnect_status_ = true;
-  this->publish_connection_(request_id);
+  this->publish_connection_(request_id, result);
   this->publish_status_(reason, result, request_id);
   this->status_set_warning();
   this->parent()->disconnect();
@@ -179,7 +204,8 @@ bool LXYCharger::send_frame_(uint8_t *frame, size_t size) {
     this->invalidate_link_("BLE unavailable; request not confirmed", this->set_pending_ ? Result::UNKNOWN : Result::FAILED);
     return false;
   }
-  ESP_LOGD(TAG, "TX %s", hex_(frame, size).c_str());
+  ESP_LOGD(TAG, "TX request=%lu handle=0x%04X %s", (unsigned long) this->active_request_id_,
+           this->tx_handle_, hex_(frame, size).c_str());
   const auto result = esp_ble_gattc_write_char(
       this->parent()->get_gattc_if(), this->parent()->get_conn_id(), this->tx_handle_,
       size, frame, ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
@@ -253,6 +279,14 @@ void LXYCharger::handle_frame_(const uint8_t *frame, size_t size) {
   ESP_LOGD(TAG, "RX %s", hex_(frame, size).c_str());
   const uint8_t command = frame[3];
   if (command == 0x84) {
+    if (this->status_poll_pending_) {
+      if (millis() - this->status_poll_started_ >= RESPONSE_TIMEOUT_MS) {
+        this->invalidate_link_("Background status reply arrived after timeout", Result::FAILED);
+        return;
+      }
+      this->status_poll_pending_ = false;
+      ESP_LOGD(TAG, "Background status reply received; serial request slot released");
+    }
     Event event{};
     event.type = EventType::RAW_STATUS;
     event.message = hex_(frame, size);
@@ -317,12 +351,15 @@ void LXYCharger::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t,
     case ESP_GATTC_DISCONNECT_EVT:
     case ESP_GATTC_CLOSE_EVT: {
       const bool uncertain = this->set_pending_;
+      const bool unsent = this->deferred_request_pending_;
       const bool interrupted = this->busy_();
       const uint32_t request_id = this->active_request_id_ ? this->active_request_id_ : this->connection_request_id_;
       this->reset_link_state_();
-      if (!this->disconnect_reported_) this->publish_connection_(request_id);
+      if (!this->disconnect_reported_)
+        this->publish_connection_(request_id, unsent ? Result::FAILED : Result::INFO);
       if (!this->disconnect_reported_ && !this->preserve_disconnect_status_)
-        this->publish_status_(uncertain ? "Disconnected during Apply; outcome unknown; no replay" : "Disconnected",
+        this->publish_status_(uncertain ? "Disconnected during Apply; outcome unknown; no replay" :
+                              (unsent ? "Disconnected; pending request discarded before send" : "Disconnected"),
                               uncertain ? Result::UNKNOWN : (interrupted ? Result::FAILED : Result::INFO), request_id);
       this->disconnect_reported_ = true;
       break;
@@ -376,8 +413,12 @@ void LXYCharger::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t,
       }
       break;
     case ESP_GATTC_WRITE_CHAR_EVT:
-      if (param->write.handle == this->tx_handle_ && param->write.status != ESP_GATT_OK)
-        this->invalidate_link_("GATT write completion failed; outcome unknown; no replay");
+      if (param->write.handle == this->tx_handle_) {
+        ESP_LOGD(TAG, "GATT TX completion: handle=0x%04X status=%d (not charger acknowledgement)",
+                 param->write.handle, param->write.status);
+        if (param->write.status != ESP_GATT_OK)
+          this->invalidate_link_("GATT write completion failed; outcome unknown; no replay");
+      }
       break;
     case ESP_GATTC_NOTIFY_EVT:
       if (this->transport_ready_ && param->notify.handle == this->rx_handle_ &&
@@ -404,8 +445,10 @@ void LXYCharger::loop() {
     }
     if (!this->overflow_status_sent_) {
       event.type = EventType::STATUS;
-      event.result = Result::UNKNOWN;
-      event.message = "Event queue overflow; BLE disabled; no settings replayed";
+      event.result = this->overflow_result_;
+      event.message = this->overflow_result_ == Result::FAILED ?
+          "Event queue overflow; request failed; BLE disabled; no replay" :
+          "Event queue overflow; BLE disabled; no settings replayed";
       if (!this->bus_->publish(event)) return;
       this->overflow_status_sent_ = true;
     }
@@ -426,12 +469,14 @@ void LXYCharger::loop() {
   }
   if (this->transport_ready_ && this->parent()->state() != esp32_ble_tracker::ClientState::ESTABLISHED) {
     const bool uncertain = this->set_pending_;
+    const bool unsent = this->deferred_request_pending_;
     const bool interrupted = this->busy_();
     const uint32_t request_id = this->active_request_id_ ? this->active_request_id_ : this->connection_request_id_;
     this->reset_link_state_();
-    this->publish_connection_(request_id);
+    this->publish_connection_(request_id, unsent ? Result::FAILED : Result::INFO);
     if (!this->preserve_disconnect_status_)
-      this->publish_status_(uncertain ? "Link lost during Apply; outcome unknown; no replay" : "BLE link unavailable",
+      this->publish_status_(uncertain ? "Link lost during Apply; outcome unknown; no replay" :
+                            (unsent ? "Link lost; pending request discarded before send" : "BLE link unavailable"),
                             uncertain ? Result::UNKNOWN : (interrupted ? Result::FAILED : Result::INFO), request_id);
     this->disconnect_reported_ = true;
   }
@@ -448,6 +493,10 @@ void LXYCharger::loop() {
     return;
   }
   if (!this->transport_ready_) return;
+  if (this->status_poll_pending_ && millis() - this->status_poll_started_ >= RESPONSE_TIMEOUT_MS) {
+    this->invalidate_link_("Background status query timed out; reconnecting to discard late replies", Result::FAILED);
+    return;
+  }
   if (this->set_pending_ && millis() - this->set_started_ >= RESPONSE_TIMEOUT_MS) {
     this->invalidate_link_("Apply timed out; outcome unknown; reconnecting without replay");
     return;
@@ -462,9 +511,23 @@ void LXYCharger::loop() {
     this->request_config_(this->connection_request_id_);
   } else if (this->set_pending_ && this->echo_received_ && !this->readback_sent_ && !this->query_pending_) {
     this->request_config_(this->active_request_id_);
+  } else if (this->deferred_request_pending_ && !this->status_poll_pending_) {
+    const Event request = this->deferred_request_;
+    this->deferred_request_pending_ = false;
+    this->deferred_request_ = Event{};
+    this->active_request_id_ = 0;
+    ESP_LOGI(TAG, "request=%lu Background status complete; sending queued request once",
+             (unsigned long) request.request_id);
+    if (request.type == EventType::REQUEST_APPLY_CONFIG)
+      this->apply_settings_(request.voltage, request.current, request.request_id);
+    else
+      this->request_config_(request.request_id);
   }
-  if (this->transport_ready_ && !this->busy_() && millis() - this->last_status_poll_ >= STATUS_INTERVAL_MS) {
+  if (this->transport_ready_ && !this->busy_() && !this->status_poll_pending_ &&
+      millis() - this->last_status_poll_ >= STATUS_INTERVAL_MS) {
     this->last_status_poll_ = millis();
+    this->status_poll_started_ = this->last_status_poll_;
+    this->status_poll_pending_ = true;
     this->send_(0x04);
   }
 }

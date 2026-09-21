@@ -99,6 +99,7 @@ esphome logs esp32-headless.yaml --device /dev/cu.YOUR_PORT
 ```sh
 python components/lxy_charger/test_protocol.py
 python tests/test_event_core.py
+python tests/test_ble_serialization.py
 ```
 
 运行完整矩阵：
@@ -112,6 +113,8 @@ python tests/matrix.py --mode compile --cases all --jobs 2
 掩码 bit 0/1/2/3 分别表示 LCD/Button/LED/Web；例如 `--cases 0,15` 选择纯核心与全部启用。默认结果和日志在 `.esphome/matrix/`，可用 `--work-dir` 更改。矩阵使用示例凭据，只编译，不上传硬件。
 
 完整编译结果见 [16 组合记录](docs/test-matrix.json)，实机范围见 [验证记录](docs/verification.md)。
+
+BLE 串行回归测试编译实际服务组件，用模拟时钟和 GATT 传输验证后台轮询期间的请求等待、取消及不重复发送。后台 `04` 未收到 `84` 时不会插入新的查询或设置帧。
 
 请以对应提交的测试输出为准；配置通过、代码生成通过和固件编译通过是不同结果。原生测试中的模块替身验证事件边界，不代替 ESPHome 实际适配器的编译或板上测试。
 
