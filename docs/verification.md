@@ -25,7 +25,7 @@ The final headless + Web profile and the complete LCD/Button/LED/Web profile wer
 3. Four explicit Apply operations were independently verified: current 5.0 A, restore 5.1 A, voltage 58.3 V, restore 58.4 V.
 4. Disconnect invalidated readiness and readback values. Reconnect read back the restored configuration without replaying Apply.
 
-Both exercises finished with 58.4 V / 5.1 A restored. The complete profile remains installed using authenticated ESPHome OTA. Physical display/LED/button observations are pending final confirmation.
+Both exercises finished with 58.4 V / 5.1 A restored. The complete profile remains installed using authenticated ESPHome OTA. On 2026-09-21 the operator confirmed that physical LCD display verification passed. Independent observations of the red LED and physical A button have not yet been reported; their configuration and event paths are included in the automated coverage above.
 
 ## Status-poll serialization regression
 
