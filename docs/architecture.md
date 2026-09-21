@@ -1,11 +1,12 @@
 # 模块架构与事件契约
 
-系统以 `charger_event_bus` 作为所有应用模块之间的通信边界。BLE 是必选服务；LCD、Button、LED、Web 可分别移除。公共状态来自总线快照，可选模块不读取 `LXYCharger` 对象，也不读取其他可选模块的实体。
+系统以 `charger_event_bus` 作为所有应用模块之间的通信边界。BLE 是必选服务；LCD、Button、LED、Web、Battery 可分别移除。公共状态来自总线快照，可选模块不读取 `LXYCharger` 对象，也不读取其他可选模块的实体。
 
 ```mermaid
 flowchart LR
     Button["Button · 可选"] -->|连接 / 读取 / Apply / INPUT / UI_STATE| Bus["事件队列 + 状态快照 · 必选"]
     Web["Web · 可选"] -->|连接 / 查询 / Apply / 网络状态| Bus
+    Battery["本机电池 · 可选 AXP192"] -->|BOARD_BATTERY| Bus
     Bus -->|REQUEST_*| BLE["BLE 服务 · 必选"]
     BLE -->|连接 / 配置 / 事务 / 原始帧 / 测量能力| Bus
     BLE <-->|GATT| Charger["LXY BLE charger"]
@@ -146,11 +147,11 @@ if (id == 0) {
 
 ## 组合与验证边界
 
-必选核心始终包含 BLE 和 bus，四个可选项分别为 LCD、Button、LED、Web，共 16 种组合。矩阵以 M5StickC Plus 为完整硬件基准，验证每个组合的 YAML 和实际固件编译；ATOMS3U 另做无屏配置编译。
+必选核心始终包含 BLE 和 bus，五个可选项分别为 LCD、Button、LED、Web、Battery，共 32 种组合。矩阵以 M5StickC Plus 为完整硬件基准，验证每个组合的 YAML 和实际固件编译；ATOMS3U 另做无屏配置编译。
 
-原生 `tests/test_event_core.py` 使用模块替身检查 16 种组合的事件流、关联 ID、读回快照、断线失效、重连不重放，以及队列边界。这些是软件边界测试，不能替代真实 ESPHome 适配器编译，也不能验证 BLE 射频、屏幕朝向或实体按键。
+原生 `tests/test_event_core.py` 使用模块替身检查 32 种组合的事件流、关联 ID、读回快照、断线失效、重连不重放，以及队列边界。这些是软件边界测试，不能替代真实 ESPHome 适配器编译，也不能验证 BLE 射频、屏幕朝向或实体按键。
 
-实机验证状态以[验证记录](verification.md)为准；ATOMS3U **尚未实机验证**。没有声明所有 16 个组合都已逐个刷机。具体构建结果应与源码提交及测试输出对应。
+实机验证状态以[验证记录](verification.md)为准；ATOMS3U **尚未实机验证**。没有声明所有 32 个组合都已逐个刷机。具体构建结果应与源码提交及测试输出对应。
 
 ## LCD、按钮与 LED 的独立性
 
@@ -168,3 +169,8 @@ A 短按选择、长按进入编辑；编辑时 A/B 减/加 0.1，A 长按进入
 ### 待机仪表事件
 
 Button 在 VIEW 页无输入边沿 15 秒、LCD 心跳可用且没有请求或按键占用时，发布 `UI_STATE` 切换到 `METER`。LCD 只读取快照渲染 V/A/W，不引用 Button 对象。第一次按键立即返回 VIEW 并消费整个手势，避免唤醒兼作编辑或提交。只有 LCD 的组合保留 VIEW；没有 LCD 的组合不进入仪表页。功率仅取同一份有效、未过期的实时 V/A 样本相乘；单电压解码时电流与功率均未知。
+
+
+### 本机电池事件
+
+`m5stick_battery` 独立读取 AXP192，每 2 秒发布 `BOARD_BATTERY`，包含电池存在、采样有效性、电压及充/放电两个 mA 通道。总线归约出带符号净电流（充入减放出），以独立时间戳在 6 秒后过期。BLE 连接事件不清除本机电池读数，本机电池事件也不改变 BLE 状态、设定或外接输出数据。LCD 的应用数据仍全部来自总线；仅底部主页行消费本机电池快照，专属功率页不受影响。LCD 和 Battery 的 I2C 依赖通过同一个映射式 package 合并，只有 Battery、只有 LCD 或两者都启用均有效。

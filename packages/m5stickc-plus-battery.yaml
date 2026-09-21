@@ -1,0 +1,9 @@
+# Optional board-battery monitoring; original AXP192 M5StickC Plus only.
+packages:
+  m5stick_bus: !include m5stickc-plus-i2c.yaml
+m5stick_battery:
+  id: board_battery
+  event_bus_id: charger_bus
+  i2c_id: m5stick_internal_i2c
+  address: 0x34
+  update_interval: 2s

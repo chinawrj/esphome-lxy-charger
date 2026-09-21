@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate/generate/compile all optional-module combinations without hardware.
 
-Bit 0 LCD, bit 1 Button, bit 2 LED, bit 3 Web. BLE and the event bus are
+Bit 0 LCD, bit 1 Button, bit 2 LED, bit 3 Web, bit 4 Battery. BLE and the event bus are
 mandatory. All generated configurations use dummy example credentials.
 """
 import argparse
@@ -20,19 +20,20 @@ MODULES = (
     ("button", "m5stickc-plus-buttons.yaml"),
     ("led", "m5stickc-plus-led.yaml"),
     ("web", "web.yaml"),
+    ("battery", "m5stickc-plus-battery.yaml"),
 )
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("validate", "generate", "compile"), default="validate")
-    parser.add_argument("--cases", default="all", help="all, or comma-separated masks 0..15")
+    parser.add_argument("--cases", default="all", help="all, or comma-separated masks 0..31")
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--work-dir", type=Path, default=ROOT / ".esphome" / "matrix")
     args = parser.parse_args()
-    cases = list(range(16)) if args.cases == "all" else sorted(set(int(s) for s in args.cases.split(",")))
-    if not cases or any(mask < 0 or mask > 15 for mask in cases) or args.jobs < 1:
-        parser.error("cases must be 0..15 and jobs must be positive")
+    cases = list(range(32)) if args.cases == "all" else sorted(set(int(s) for s in args.cases.split(",")))
+    if not cases or any(mask < 0 or mask > 31 for mask in cases) or args.jobs < 1:
+        parser.error("cases must be 0..31 and jobs must be positive")
     work = args.work_dir.resolve()
     source = work / "source"
     source.mkdir(parents=True, exist_ok=True)

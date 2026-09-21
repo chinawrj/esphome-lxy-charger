@@ -11,7 +11,7 @@ external_components:
   - source:
       type: local
       path: components
-    components: [charger_event_bus, lxy_charger, charger_web, charger_display, charger_buttons, charger_indicator]
+    components: [charger_event_bus, lxy_charger, charger_web, charger_display, charger_buttons, charger_indicator, m5stick_battery]
 
 logger:
   level: INFO

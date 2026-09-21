@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文**
 
-基于 **ESPHome 2026.9.0 + ESP-IDF** 的 LXY BLE 充电器控制器。BLE 与事件总线是必选核心，LCD、实体按键、LED、独立网页是四个可选模块。使用网页时不需要 Home Assistant 服务器；不选网页时，BLE 仍可独立连接并读取参数。
+基于 **ESPHome 2026.9.0 + ESP-IDF** 的 LXY BLE 充电器控制器。BLE 与事件总线是必选核心，LCD、实体按键、LED、独立网页、本机电池监测是五个可选模块。使用网页时不需要 Home Assistant 服务器；不选网页时，BLE 仍可独立连接并读取参数。
 
 项目支持已验证的 `FFF0` 服务、`FFF2` 写入、`FFF1` 通知协议。相同品牌或设备名称不代表协议一定兼容。LCD 主区域用于显示**输出电压、电流**，**充电设定值**以较小字体单独显示。输出数据缺失或过期时显示 `--.-`，绝不用设定值代替测量值。**已启用推定的实时电压解析**：`84` 的 DATA[3:5] 按大端整数除以 10。重启抓包支持这一解释，但尚未与原小程序或万用表交叉核验，屏幕标注“电压待核”。**实时电流解码按用户要求暂缓**，保持 `--.-` / `NA`，设定电流调节仍可用。尚未实现温度解析或充电输出开关。
 
@@ -36,7 +36,7 @@
 | [esp32-minimal.yaml](esp32-minimal.yaml) | 带 BLE 的经典 ESP32，4 MB Flash | BLE + 事件总线 |
 | [esp32-headless.yaml](esp32-headless.yaml) | 带 BLE 的经典 ESP32，4 MB Flash | 核心 + Web |
 | [atoms3u.yaml](atoms3u.yaml) | M5Stack ATOMS3U，ESP32-S3，8 MB Flash | 核心 + Web |
-| [m5stickc-plus.yaml](m5stickc-plus.yaml) | 原始 M5StickC Plus / v1.1，ESP32-PICO-D4、AXP192 | 核心 + LCD + Button + LED + Web |
+| [m5stickc-plus.yaml](m5stickc-plus.yaml) | 原始 M5StickC Plus / v1.1，ESP32-PICO-D4、AXP192 | 核心 + LCD + Button + LED + Web + Battery |
 
 M5StickC Plus 的硬件包不适用于 Plus2。ATOMS3U 配置不包含屏幕；普通 ESP32 板也不能直接套用 M5StickC 的引脚。ESP32-S2 没有 BLE，不适用本项目。[M5StickC Plus 官方硬件说明](https://docs.m5stack.com/en/core/m5stickc_plus)、[ATOMS3U 官方硬件说明](https://docs.m5stack.com/en/core/AtomS3U)。
 
@@ -51,9 +51,10 @@ packages:
   lcd: !include packages/m5stickc-plus-display.yaml
   buttons: !include packages/m5stickc-plus-buttons.yaml
   led: !include packages/m5stickc-plus-led.yaml
+  battery: !include packages/m5stickc-plus-battery.yaml
 ```
 
-删除对应的一行即可省去该模块及其资源。上面三个 M5StickC 硬件包仅用于对应开发板。LCD、Button、LED、Web 之间没有互相调用；它们只通过事件总线交换请求和状态。详见[架构与事件契约](docs/architecture.md)。
+删除对应的一行即可省去该模块及其资源。上面四个 M5StickC 硬件包仅用于对应开发板。LCD、Button、LED、Web、Battery 之间没有互相调用；它们只通过事件总线交换请求和状态。详见[架构与事件契约](docs/architecture.md)。
 
 ## 编译与首次使用
 
@@ -142,6 +143,20 @@ esphome logs esp32-headless.yaml --device /dev/cu.YOUR_PORT
 
 本地反馈明确区分“参数已刷新”“设置已确认”和“已取消，未发送”；无法确认结果时显示**“结果未确认，未重发”**。普通提示显示 3 秒；操作失败、结果未知和连接失败提示显示 6 秒，随后自动消退，不会改变红灯含义。按键通过事件通信，不直接调用 BLE 服务。
 
+### M5Stick 本机电池
+
+主页底部显示 **M5Stick 自身电池**：电压保留两位小数，电流使用带方向的 mA。
+`充 +...mA` 表示充电，`放 -...mA` 表示放电；满电或无净电流时可能为 `0.0mA`，
+不会仅凭 USB 已连接就判断正在充电。读取失败或数据过期显示 `--`，未检测到电池单独提示。
+它与外接 BLE 充电器的数据独立，不代表外接充电器的实时电流已解码。
+按住按钮时底栏优先显示操作提示，W/V/A 专属页保持不变。
+
+<img src="docs/images/lcd-battery-discharging-preview.png" width="480" alt="主页布局预览：M5Stick自身电池电压和带负号的放电电流">
+
+上图使用合成数值演示布局，不是实机读数。
+[充电布局预览](docs/images/lcd-battery-charging-preview.png) ·
+[驱动、寄存器来源与事件说明](components/m5stick_battery/README.md)。
+
 ### 待机仪表页
 
 同时启用 LCD 和 Button 时，**主页 15 秒没有按键操作**，自动进入专属仪表页：功率使用 **76 px 大字**作为主体，电压、电流用 28 px 字体并排放在底部一行；较长的功率数字会缩小以避免溢出，只保留三项读数和单位。按 A 或 B 返回主页；唤醒的整次手势会被消费，不会同时刷新、连接、编辑或提交。编辑、确认、帮助、请求未完成及按住按键时不会切入仪表页。仅有 LCD、没有 Button 的配置继续显示主页。
@@ -180,8 +195,8 @@ M5StickC Plus 指示灯采用 1 kHz PWM，亮起时限制为 **10% 占空比**�
 
 | 层次 | 覆盖内容 | 不能证明的事项 |
 |---|---|---|
-| 原生 C++ 测试 | 抓包帧编解码；队列、关联 ID、快照失效；16 种模块组合的模拟事件路由 | 实际无线通信、引脚和屏幕效果 |
-| ESPHome 配置与固件矩阵 | 固定必选 BLE+bus，遍历 LCD/Button/LED/Web 的全部 `2^4 = 16` 种 M5StickC 组合；另编译 ATOMS3U | 已把所有组合逐个刷到硬件 |
+| 原生 C++ 测试 | 抓包帧编解码；队列、关联 ID、快照失效；32 种模块组合的模拟事件路由 | 实际无线通信、引脚和屏幕效果 |
+| ESPHome 配置与固件矩阵 | 固定必选 BLE+bus，遍历 LCD/Button/LED/Web/Battery 的全部 `2^5 = 32` 种 M5StickC 组合；另编译 ATOMS3U | 已把所有组合逐个刷到硬件 |
 | 实机验证 | 新版 M5StickC Plus 中文 LCD、按键响应、红灯常亮：**用户现场确认通过**。历史固件的无 LCD + Web 和完整配置：BLE 读取、显式 Apply 写值回读及重连测试通过 | ATOMS3U 实机与新版界面的实体 Apply 写入测试：**尚未验证**；按键响应确认不等同于设置写入验证 |
 
 运行原生测试：
@@ -191,6 +206,7 @@ python components/lxy_charger/test_protocol.py
 python tests/test_event_core.py
 python tests/test_ble_serialization.py
 python tests/test_local_controls.py
+python tests/test_battery.py
 python tests/test_telemetry_view.py
 python tests/test_web_telemetry.py
 ```
@@ -203,11 +219,11 @@ python tests/matrix.py --mode generate --cases all
 python tests/matrix.py --mode compile --cases all --jobs 2
 ```
 
-掩码 bit 0/1/2/3 分别表示 LCD/Button/LED/Web；例如 `--cases 0,15` 选择纯核心与全部启用。默认结果和日志在 `.esphome/matrix/`，可用 `--work-dir` 更改。矩阵使用示例凭据，只编译，不上传硬件。
+掩码 bit 0/1/2/3/4 分别表示 LCD/Button/LED/Web/Battery；例如 `--cases 0,31` 选择纯核心与全部启用。默认结果和日志在 `.esphome/matrix/`，可用 `--work-dir` 更改。矩阵使用示例凭据，只编译，不上传硬件。
 
-本地操作测试编译真实按键和 LED 适配器，检查确认、取消、输入丢失、连接专用 LED 时序、长按释放提示及帮助页行为。遥测界面和 Web 测试通过合成的类型化事件验证新鲜度、失效与显示，不用于证明充电器的输出字节映射。Web 测试覆盖真实适配器及 **5 项可选遥测/状态实体的全部 32 种组合**，与 **4 个可选硬件/Web 模块的 16 种组合**分别计算。
+本地操作测试编译真实按键和 LED 适配器，检查确认、取消、输入丢失、连接专用 LED 时序、长按释放提示及帮助页行为。遥测界面和 Web 测试通过合成的类型化事件验证新鲜度、失效与显示，不用于证明充电器的输出字节映射。Web 测试覆盖真实适配器及 **5 项可选遥测/状态实体的全部 32 种组合**，与 **5 个可选硬件/Web 模块的 32 种组合**分别计算。
 
-完整编译结果见 [16 组合记录](docs/test-matrix.json)，对应的源码版本与实机范围见 [验证记录](docs/verification.md)。请以所用版本的记录为准；旧版界面的验收不自动覆盖新界面。
+完整编译结果见 [32 组合记录](docs/test-matrix.json)，对应的源码版本与实机范围见 [验证记录](docs/verification.md)。请以所用版本的记录为准；旧版界面的验收不自动覆盖新界面。
 
 BLE 串行回归测试编译实际服务组件，用模拟时钟和 GATT 传输验证后台轮询期间的请求等待、取消及不重复发送。后台 `04` 未收到 `84` 时不会插入新的查询或设置帧。
 
@@ -221,6 +237,7 @@ BLE 串行回归测试编译实际服务组件，用模拟时钟和 GATT 传输�
 - `components/charger_display/`：共享 LCD 布局与视图模型。
 - `components/charger_buttons/`：本地按键编辑、显式确认与取消。
 - `components/charger_indicator/`：独立、非阻塞的 LED 模式。
+- `components/m5stick_battery/`：可选 AXP192 本机电池采样与事件发布。
 - `packages/common.yaml`：必选核心。
 - `packages/web.yaml`：可选网页、Wi-Fi 与网络状态事件。
 - `packages/m5stickc-plus-*.yaml`：各自独立的 LCD、Button、LED 硬件模块。

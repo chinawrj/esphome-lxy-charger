@@ -188,7 +188,21 @@ inline View make_view(const charger_event_bus::Snapshot &state, uint32_t now) {
   view.add(132, 104, Font::SMALL, state.ui_buttons_ready && state.ui_field == UiField::CURRENT ? Ink::AMBER : Ink::MUTED,
       "设定 " + a + " A");
   const char *hold = hold_text(state.ui_hold);
-  view.add(8, 118, Font::SMALL, *hold ? Ink::AMBER : Ink::MUTED,
+  if (state.battery_seen && !*hold) {
+    if (!state.battery_fresh(now)) {
+      view.add(8, 118, Font::SMALL, Ink::MUTED, "本机电池 -- V / -- mA");
+    } else if (!state.battery_present) {
+      view.add(8, 118, Font::SMALL, Ink::MUTED, "本机电池 未检测到");
+    } else {
+      char voltage[32], current[32];
+      std::snprintf(voltage, sizeof(voltage), "本机电池 %.2fV", state.battery_voltage);
+      const float ma = state.battery_current_ma;
+      if (ma == 0) std::snprintf(current, sizeof(current), "0.0mA");
+      else std::snprintf(current, sizeof(current), "%s%+.1fmA", ma > 0 ? "充" : "放", ma);
+      view.add(8, 118, Font::SMALL, Ink::MUTED, voltage);
+      view.add(232, 118, Font::SMALL, ma > 0 ? Ink::GREEN : Ink::MUTED, current, true);
+    }
+  } else view.add(8, 118, Font::SMALL, *hold ? Ink::AMBER : Ink::MUTED,
       *hold ? hold : (state.ui_buttons_ready ? (state.ready ? "A选 长A编辑 B刷新 长B帮助" :
        (!state.connected && !state.connection_enabled ? "B 连接    长 B 帮助" : "连接处理中    长 B 帮助")) :
        "红灯仅表示连接状态"));

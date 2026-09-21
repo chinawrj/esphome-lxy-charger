@@ -9,6 +9,7 @@ packages:
   lcd: !include packages/m5stickc-plus-display.yaml
   buttons: !include packages/m5stickc-plus-buttons.yaml
   led: !include packages/m5stickc-plus-led.yaml
+  battery: !include packages/m5stickc-plus-battery.yaml
 
 esp32:
   board: m5stick-c

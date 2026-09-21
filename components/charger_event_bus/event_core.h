@@ -16,7 +16,7 @@ namespace esphome::charger_event_bus {
 enum class EventType {
   REQUEST_CONNECT, REQUEST_DISCONNECT, REQUEST_READ_CONFIG, REQUEST_APPLY_CONFIG,
   CONNECTION, CONFIG, STATUS, RAW_STATUS, INPUT, NETWORK_STATE,
-  TELEMETRY, UI_DISPLAY, UI_STATE, UI_CONTROLS, TELEMETRY_CAPABILITY
+  TELEMETRY, UI_DISPLAY, UI_STATE, UI_CONTROLS, TELEMETRY_CAPABILITY, BOARD_BATTERY
 };
 
 enum class Result { INFO, ACCEPTED, VERIFIED, REJECTED, FAILED, UNKNOWN };
@@ -49,6 +49,11 @@ struct Event {
   bool telemetry_supported{false};
   uint8_t telemetry_channels{3};  // bit 0: voltage, bit 1: current
   bool telemetry_inferred{false};  // Mapping inferred from frames, not cross-checked.
+  float battery_voltage{NAN};
+  float battery_charge_ma{NAN};
+  float battery_discharge_ma{NAN};
+  bool battery_valid{false};
+  bool battery_present{false};
   UiMode ui_mode{UiMode::VIEW};
   UiNotice ui_notice{UiNotice::NONE};
   UiHold ui_hold{UiHold::NONE};
@@ -76,6 +81,11 @@ struct Snapshot {
   bool telemetry_inferred{false};
   bool ui_display_ready{false};
   bool ui_buttons_ready{false};
+  float battery_voltage{NAN};
+  float battery_charge_ma{NAN};
+  float battery_discharge_ma{NAN};
+  bool battery_valid{false};
+  bool battery_present{false};
   UiMode ui_mode{UiMode::VIEW};
   UiNotice ui_notice{UiNotice::NONE};
   UiHold ui_hold{UiHold::NONE};
@@ -94,6 +104,13 @@ struct Snapshot {
   std::string ip_address;
   uint32_t last_request_id{0};
   Result result{Result::INFO};
+
+  bool battery_seen{false};
+  uint32_t battery_sampled_at{0};
+  float battery_current_ma{NAN};  // Positive charges this board's battery.
+  bool battery_fresh(uint32_t now) const {
+    return battery_seen && battery_valid && uint32_t(now - battery_sampled_at) < 6000;
+  }
 
   OutputState output_state(uint32_t now) const {
     if (!connected) return OutputState::DISCONNECTED;
@@ -243,6 +260,21 @@ class EventCore {
         this->snapshot_.output_current = this->snapshot_.telemetry_valid && (this->snapshot_.telemetry_channels & 2) ? event.output_current : NAN;
         this->snapshot_.sampled_at = event.sampled_at;
         break;
+      case EventType::BOARD_BATTERY: {
+        auto &s = this->snapshot_;
+        s.battery_seen = true;
+        s.battery_sampled_at = event.sampled_at;
+        s.battery_valid = event.battery_valid && (!event.battery_present ||
+            (std::isfinite(event.battery_voltage) && event.battery_voltage >= 0 &&
+             std::isfinite(event.battery_charge_ma) && event.battery_charge_ma >= 0 &&
+             std::isfinite(event.battery_discharge_ma) && event.battery_discharge_ma >= 0));
+        s.battery_present = s.battery_valid && event.battery_present;
+        s.battery_voltage = s.battery_present ? event.battery_voltage : NAN;
+        s.battery_charge_ma = s.battery_present ? event.battery_charge_ma : NAN;
+        s.battery_discharge_ma = s.battery_present ? event.battery_discharge_ma : NAN;
+        s.battery_current_ma = s.battery_charge_ma - s.battery_discharge_ma;
+        break;
+      }
       case EventType::UI_DISPLAY:
         this->snapshot_.ui_display_ready = event.ui_display_ready;
         break;

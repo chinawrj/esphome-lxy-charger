@@ -1,0 +1,7 @@
+# A mapping (not a list) lets LCD and battery merge this shared bus once.
+i2c:
+  id: m5stick_internal_i2c
+  sda: GPIO21
+  scl: GPIO22
+  frequency: 100kHz
+  scan: false

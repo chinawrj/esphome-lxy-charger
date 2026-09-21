@@ -91,3 +91,10 @@ stale and disconnected samples cannot produce a numeric watt reading.
 Only Button owns inactivity/wake state; the renderer has no timer side effects
 and sends no BLE requests. Dedicated previews cover voltage-only, synthetic
 both-channel, and stale data. These are layout renders, not hardware photos.
+
+
+The optional board-battery event adds a home footer with voltage and signed mA
+(`充 +` / `放 -`), replacing the idle button hint while retaining held-action
+prompts. Unavailable/stale and absent battery are distinct. The W/V/A meter and
+edit/confirm/help pages retain their existing purpose. Without Battery, the
+original button hint remains; neither battery data nor BLE updates reset idle.

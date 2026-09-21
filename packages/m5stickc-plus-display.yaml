@@ -1,3 +1,6 @@
+packages:
+  m5stick_bus: !include m5stickc-plus-i2c.yaml
+
 # Original M5StickC Plus (AXP192), including the user's v1.1; not Plus2.
 # Hardware: https://docs.m5stack.com/en/core/m5stickc_plus
 # LCD rails: https://github.com/m5stack/M5StickC-Plus/blob/master/src/AXP192.cpp
@@ -33,13 +36,6 @@ globals:
     type: bool
     restore_value: false
     initial_value: 'false'
-
-i2c:
-  - id: m5stick_internal_i2c
-    sda: GPIO21
-    scl: GPIO22
-    frequency: 100kHz
-    scan: false
 
 i2c_device:
   - id: m5stick_axp192

@@ -146,3 +146,14 @@ These cover queue/routing boundaries, the real BLE state machine with fake GATT,
 real optional-module wrappers, capability/freshness reduction and display/web
 consumers. They do not verify radio, panel wiring or physical keys. On macOS with
 mismatched Command Line Tools, pass `--sdk` with a matching Xcode SDK path.
+
+
+## Board battery
+
+`BOARD_BATTERY` is independent of BLE output telemetry. The producer supplies
+validity, battery presence, voltage and separate charge/discharge mA readings.
+The snapshot stores a dedicated RX timestamp and signed `battery_current_ma`
+(charge minus discharge). Nonfinite/negative channel values invalidate a present
+battery sample. Absent battery and failed sampling remain distinguishable;
+`battery_fresh(now)` expires after 6 seconds and does not depend on BLE connection.
+This event cannot change BLE setpoints, link/readiness/busy or transaction IDs.

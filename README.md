@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-A BLE charger controller built with **ESPHome 2026.9.0 and ESP-IDF**. BLE and an internal event bus form the required core. The LCD, physical buttons, LED, and standalone web interface are four independent optional modules. The web interface works without a Home Assistant server; a build without Web can still connect to the charger and read its configuration.
+A BLE charger controller built with **ESPHome 2026.9.0 and ESP-IDF**. BLE and an internal event bus form the required core. LCD, physical buttons, LED, standalone Web and the M5Stick battery monitor are five independent optional modules. The web interface works without a Home Assistant server; a build without Web can still connect to the charger and read its configuration.
 
 The supported protocol uses service `FFF0`, writes to `FFF2`, and notifications from `FFF1`. A matching brand or advertised device name does not establish protocol compatibility. The main LCD view is reserved for **output voltage and current**; charging **setpoints** are shown separately in smaller text. Missing or stale output data is shown as `--.-`, never substituted with setpoints. **Live voltage decoding is provisional**: `84` DATA[3:5], big-endian, divided by 10. Restart captures support this interpretation, but it has not been cross-checked against the original app or a meter. The LCD labels it `电压待核` (voltage mapping awaiting verification). **Live current decoding is deferred**; current remains `--.-` / `NA`, while current setpoint control remains available. Temperature decoding and a charging-output switch are not implemented.
 
@@ -36,7 +36,7 @@ Captured from a M5StickC Plus running the updated interface firmware after OTA. 
 | [esp32-minimal.yaml](esp32-minimal.yaml) | Classic ESP32 with BLE, 4 MB flash | BLE + event bus |
 | [esp32-headless.yaml](esp32-headless.yaml) | Classic ESP32 with BLE, 4 MB flash | Core + Web |
 | [atoms3u.yaml](atoms3u.yaml) | M5Stack ATOMS3U, ESP32-S3, 8 MB flash | Core + Web |
-| [m5stickc-plus.yaml](m5stickc-plus.yaml) | Original M5StickC Plus / v1.1, ESP32-PICO-D4 and AXP192 | Core + LCD + Button + LED + Web |
+| [m5stickc-plus.yaml](m5stickc-plus.yaml) | Original M5StickC Plus / v1.1, ESP32-PICO-D4 and AXP192 | Core + LCD + Button + LED + Web + Battery |
 
 The M5StickC Plus hardware packages do not support Plus2. ATOMS3U has no LCD package in this project, and the M5StickC pin assignments should not be applied to a generic ESP32 board. ESP32-S2 has no BLE and is not supported. See the official [M5StickC Plus](https://docs.m5stack.com/en/core/m5stickc_plus) and [ATOMS3U](https://docs.m5stack.com/en/core/AtomS3U) hardware documentation.
 
@@ -51,9 +51,10 @@ packages:
   lcd: !include packages/m5stickc-plus-display.yaml
   buttons: !include packages/m5stickc-plus-buttons.yaml
   led: !include packages/m5stickc-plus-led.yaml
+  battery: !include packages/m5stickc-plus-battery.yaml
 ```
 
-Remove an optional package line to omit its module and resources. The three M5StickC hardware packages require that board. LCD, Button, LED, and Web communicate through the event bus; none calls another optional module directly. See the [architecture and event contract](docs/architecture.md) (Chinese).
+Remove an optional package line to omit its module and resources. The four M5StickC hardware packages require that board. LCD, Button, LED, Web, and Battery communicate through the event bus; none calls another optional module directly. See the [architecture and event contract](docs/architecture.md) (Chinese).
 
 ## Build and install
 
@@ -144,6 +145,21 @@ Drafts remain within **50.0–93.0 V / 1.0–10.0 A**, in **0.1** steps. Editing
 
 Local feedback distinguishes **parameters refreshed**, **settings confirmed**, and **cancelled without sending**. A result that cannot be confirmed is labelled **“结果未确认，未重发”** (result unconfirmed; not resent). Ordinary notices appear for 3 seconds; failure, unknown-result, and connection-failure notices remain for 6 seconds. They expire automatically and do not change the LED's meaning. Button operations use events and never call the BLE service directly.
 
+### M5Stick internal battery
+
+The home footer displays the **board's own battery**: voltage with two decimals,
+and signed current in mA. `充 +...mA` means charging; `放 -...mA` means discharging.
+A full/idle battery can read `0.0mA` even with USB connected. Read errors and stale
+samples show `--`; a missing battery is labelled separately. This is independent
+of the external BLE charger and does not enable its deferred current decoder.
+Held-button prompts temporarily replace the footer. The W/V/A-only meter is unchanged.
+
+<img src="docs/images/lcd-battery-discharging-preview.png" width="480" alt="Home layout preview with the M5Stick battery voltage and signed discharge current">
+
+This image is a synthetic layout preview, not a hardware measurement.
+[Charging preview](docs/images/lcd-battery-charging-preview.png) ·
+[Driver, register sources and event behavior](components/m5stick_battery/README.md).
+
 ### Idle meter page
 
 With both LCD and Button enabled, **15 seconds without button activity on the home page** opens a dedicated meter: **76 px power as the main reading**, with voltage and current together in a smaller 28 px footer row. Longer power readings shrink to fit. It shows only the three readings and units. Any A/B press returns to the home page; the entire wake gesture is consumed, so it cannot also refresh, connect, edit, or submit. Editing, confirmation, Help, pending requests and held buttons do not switch to the meter. LCD-only builds keep the home page.
@@ -182,13 +198,13 @@ Readback confirmation does not establish power-cycle persistence or actual elect
 
 | Check | Coverage | Limits |
 |---|---|---|
-| Native C++ tests | Captured frame decoding; event queues, IDs and invalidation; simulated event routing for all 16 module combinations; the real BLE transaction implementation with a fake clock and GATT transport | Does not validate radio behavior, GPIO wiring, or physical display appearance |
-| ESPHome matrix | Required BLE + bus with all `2^4 = 16` LCD/Button/LED/Web combinations on M5StickC; a separate ATOMS3U build | Does not mean every combination was flashed to hardware |
+| Native C++ tests | Captured frame decoding; event queues, IDs and invalidation; simulated event routing for all 32 module combinations; the real BLE transaction implementation with a fake clock and GATT transport | Does not validate radio behavior, GPIO wiring, or physical display appearance |
+| ESPHome matrix | Required BLE + bus with all `2^5 = 32` LCD/Button/LED/Web/Battery combinations on M5StickC; a separate ATOMS3U build | Does not mean every combination was flashed to hardware |
 | Recorded hardware checks | Current M5StickC Plus interface: the operator confirmed the Chinese LCD, button responses, steady red LED, and a 58.9 V decoded voltage display after charger restart. Historical firmware: headless + Web and full-profile BLE reads, explicit Apply with readback, and reconnect behavior passed | ATOMS3U hardware and a new-interface physical Apply test have not been verified; button-response confirmation does not establish a settings write |
 
-The local-controls test compiles the real button and LED adapters and checks confirmation, cancellation, input loss, and connection-only indication timing, hold/release prompts, and Help behavior. The telemetry view and Web tests use synthetic typed events to check freshness, invalidation, and presentation; they do not establish the charger's output byte mapping. The Web test compiles the real adapter for all **32 combinations of five optional telemetry/status entities**. This is separate from the **16 combinations of the four optional hardware/Web modules**.
+The local-controls test compiles the real button and LED adapters and checks confirmation, cancellation, input loss, and connection-only indication timing, hold/release prompts, and Help behavior. The telemetry view and Web tests use synthetic typed events to check freshness, invalidation, and presentation; they do not establish the charger's output byte mapping. The Web test compiles the real adapter for all **32 combinations of five optional telemetry/status entities**. This is separate from the **32 combinations of the five optional hardware/Web modules**.
 
-The [verification record](docs/verification.md) identifies the tested revision and physical checks. The [16-combination report](docs/test-matrix.json) records build results. Check those records for the revision you are using; prior acceptance does not automatically verify a changed interface.
+The [verification record](docs/verification.md) identifies the tested revision and physical checks. The [32-combination report](docs/test-matrix.json) records build results. Check those records for the revision you are using; prior acceptance does not automatically verify a changed interface.
 
 Run native tests:
 
@@ -197,6 +213,7 @@ python components/lxy_charger/test_protocol.py
 python tests/test_event_core.py
 python tests/test_ble_serialization.py
 python tests/test_local_controls.py
+python tests/test_battery.py
 python tests/test_telemetry_view.py
 python tests/test_web_telemetry.py
 ```
@@ -209,7 +226,7 @@ python tests/matrix.py --mode generate --cases all
 python tests/matrix.py --mode compile --cases all --jobs 2
 ```
 
-Mask bits 0/1/2/3 select LCD/Button/LED/Web. For example, `--cases 0,15` selects the core-only and full builds. Results and logs default to `.esphome/matrix/`; change the location with `--work-dir`. The matrix uses example credentials and compiles without uploading to a device.
+Mask bits 0/1/2/3/4 select LCD/Button/LED/Web/Battery. For example, `--cases 0,31` selects the core-only and full builds. Results and logs default to `.esphome/matrix/`; change the location with `--work-dir`. The matrix uses example credentials and compiles without uploading to a device.
 
 Configuration validation, code generation, and firmware compilation are separate checks. Native module substitutes verify event boundaries; they do not replace compilation of the real ESPHome adapters or hardware checks.
 
@@ -221,9 +238,10 @@ Configuration validation, code generation, and firmware compilation are separate
 - `components/charger_display/`: shared LCD layout and view model.
 - `components/charger_buttons/`: local button editing, explicit confirmation, and cancellation.
 - `components/charger_indicator/`: independent, nonblocking LED patterns.
+- `components/m5stick_battery/`: optional AXP192 board battery sampling and events.
 - `packages/common.yaml`: required core.
 - `packages/web.yaml`: optional web interface, Wi-Fi, and network events.
-- `packages/m5stickc-plus-*.yaml`: independent LCD, button, and LED hardware packages.
+- `packages/m5stickc-plus-*.yaml`: independent LCD, button, LED and board battery hardware packages.
 - `assets/`: display font and its [OFL license information](assets/README.md).
 - `tests/`: native checks and the configuration/build matrix.
 

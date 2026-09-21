@@ -293,11 +293,12 @@ struct MockWeb {
 };
 
 void test_all_optional_profiles() {
-  for (unsigned mask = 0; mask < 16; ++mask) {
+  for (unsigned mask = 0; mask < 32; ++mask) {
     const bool lcd_enabled = mask & 1;
     const bool button_enabled = mask & 2;
     const bool led_enabled = mask & 4;
     const bool web_enabled = mask & 8;
+    const bool battery_enabled = mask & 16;
     EventCore bus;
     std::vector<Event> ble_requests;
     assert(bus.subscribe([&](const Event &event) {
@@ -314,6 +315,14 @@ void test_all_optional_profiles() {
     assert(bus.publish(config(58.4f, 5.1f)));
     assert(bus.publish(connection(true, true)));
     drain(bus);
+    if (battery_enabled) {
+      Event battery{}; battery.type=EventType::BOARD_BATTERY;
+      battery.battery_valid=battery.battery_present=true;
+      battery.battery_voltage=4.1f;battery.battery_charge_ma=0;battery.battery_discharge_ma=100;
+      assert(bus.publish(battery));drain(bus);
+      assert(bus.snapshot().battery_current_ma==-100);
+    }
+    assert(bus.snapshot().battery_seen==battery_enabled);
     assert(ble_requests.empty());  // No observer initiates a setting on boot.
     assert(bus.snapshot().ready);
     assert(lcd.showing_values == lcd_enabled && led.on == led_enabled);
@@ -364,8 +373,8 @@ void test_all_optional_profiles() {
     drain(bus);
     assert(ble_requests.size() == requests_before_disconnect);  // No replay on reconnect.
     if (web_enabled) assert(web.draft_voltage == 58.3f && web.draft_current == 5.0f);
-    std::printf("PASS profile %02u: BLE=1 LCD=%u Button=%u LED=%u Web=%u\n", mask,
-                unsigned(lcd_enabled), unsigned(button_enabled), unsigned(led_enabled), unsigned(web_enabled));
+    std::printf("PASS profile %02u: BLE=1 LCD=%u Button=%u LED=%u Web=%u Battery=%u\n", mask,
+                unsigned(lcd_enabled), unsigned(button_enabled), unsigned(led_enabled), unsigned(web_enabled), unsigned(battery_enabled));
   }
 }
 
@@ -377,5 +386,5 @@ int main() {
   test_non_reentrant_bounded_dispatch();
   test_snapshot_lifecycle_and_correlation();
   test_all_optional_profiles();
-  std::puts("PASS: queue overflow/FIFO, invalid requests, IDs/exhaustion, reentrancy/budget, snapshot/correlation, 16 profiles");
+  std::puts("PASS: queue overflow/FIFO, invalid requests, IDs/exhaustion, reentrancy/budget, snapshot/correlation, 32 profiles");
 }

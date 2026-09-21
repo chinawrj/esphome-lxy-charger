@@ -23,6 +23,12 @@ int main() {
   state.telemetry_channels = 1; state.telemetry_inferred = true; state.sampled_at = 1000;
   state.output_voltage = 58.8f;
   emit("lcd-output-preview.png", state);
+  state.battery_seen=state.battery_valid=state.battery_present=true;
+  state.battery_sampled_at=1000;state.battery_voltage=4.125f;state.battery_current_ma=100;
+  emit("lcd-battery-charging-preview.png", state);
+  state.battery_current_ma=-135.5f;emit("lcd-battery-discharging-preview.png", state);
+  emit("lcd-battery-stale-preview.png", state,8000);
+  state.battery_seen=false;
   state.ui_mode = UiMode::METER;
   emit("lcd-meter-preview.png", state);
   state.ui_mode = UiMode::EDIT;
