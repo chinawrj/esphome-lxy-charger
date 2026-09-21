@@ -146,6 +146,8 @@ esphome logs esp32-headless.yaml --device /dev/cu.YOUR_PORT
 
 **LED 的物理颜色就是红色，红色本身不表示故障。** 它只承担一个用途：显示 BLE 连接状态。
 
+M5StickC Plus 指示灯采用 1 kHz PWM，亮起时限制为 **10% 占空比**，降低刺眼程度。可在 `packages/m5stickc-plus-led.yaml` 中调整 `max_power`；下方连接提示节奏不变。
+
 | 指示 | 含义 |
 |---|---|
 | 常亮 | 蓝牙已连接，包含初始化或处理操作期间 |

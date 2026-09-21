@@ -2,7 +2,11 @@
 
 The original M5StickC Plus LED is physically red; it is not an RGB status light.
 The component reads only the event-bus connection snapshot and drives GPIO10
-through an inverted binary output. It works without buttons, LCD or web.
+through an inverted PWM output, using the compatible binary on/off interface.
+The M5StickC Plus package limits the on-state to **10% duty at 1 kHz** so the
+indicator is less bright. Adjust `max_power` in
+`packages/m5stickc-plus-led.yaml` to change that limit; perceived brightness is
+not linear in duty cycle. It works without buttons, LCD or web.
 
 | LED | Meaning |
 | --- | --- |

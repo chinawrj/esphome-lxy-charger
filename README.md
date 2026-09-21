@@ -148,6 +148,8 @@ Local feedback distinguishes **parameters refreshed**, **settings confirmed**, a
 
 **The LED is physically red. Its colour does not indicate a fault.** It has exactly one purpose: showing the Bluetooth connection state.
 
+The M5StickC Plus indicator uses 1 kHz PWM capped at **10% duty** for a dimmer light. Adjust `max_power` in `packages/m5stickc-plus-led.yaml` if needed; this does not change the connection patterns below.
+
 | Indication | Meaning |
 |---|---|
 | Steady on | Bluetooth connected, including while initialization or an operation is in progress |

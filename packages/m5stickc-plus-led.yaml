@@ -2,10 +2,13 @@
 # Official schematic: LED2 anode=VESP_3V3, cathode=GPIO10, so LOW is on.
 # https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/669/k016-p-StickC-Plus-sche.pdf
 # Fixed red LED: steady=actual BLE link, slow blink=connecting, off=disabled.
+# Limit the on-state to 10% PWM duty to make the indicator less bright.
 # Reads only event-bus connection snapshots; no other module IDs or result codes.
 output:
-  - platform: gpio
+  - platform: ledc
     id: m5stick_connection_led
+    frequency: 1000 Hz
+    max_power: 10%
     pin:
       number: GPIO10
       inverted: true
