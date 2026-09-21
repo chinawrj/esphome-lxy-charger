@@ -31,6 +31,8 @@ A full-profile test before the fix encountered an unconfirmed Apply; it was not 
 
 After the fix, three targeted probes all queued the user request until `84`, then sent one `02` and received `82`, without timeout or reconnection. This was verified with serial TX/RX evidence, not merely the final Web value: reconnect recovery can otherwise make an unsuccessful refresh appear complete. The final normal-log-level builds then passed the complete headless and LCD-profile Web exercises described above.
 
+The final LCD-profile serial log also records a user Apply waiting for a background status reply, then sending once, matching its echo, and passing the independent readback. Thus the hardware evidence covers both deferred reads and a deferred Apply.
+
 The observed collision explains a reproducible failure path. The original Apply timeout had no frame-level diagnostic log, so its exact cause is not independently proven.
 
 The sixteen combinations were not each uploaded to physical hardware. These checks do not establish actual electrical output, charging performance, power-cycle persistence, or compatibility with different charger protocols. Original radio captures and device/network identifiers are excluded from this public report.
