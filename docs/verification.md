@@ -1,5 +1,23 @@
 # Verification record
 
+## v2.1 development checkpoint — 2026-09-21
+
+This checkpoint adds the local button editor, state-pattern LED, simplified LCD view and separate live-output display/event interfaces. **It is not a completed live-telemetry release:** the BLE `84` output V/A mapping is still unverified and the decoder is not enabled. The previous captures contain only zero-current samples. No public v2.1 release has been made at this checkpoint.
+
+- Native tests passed for the real event reducer and display view, physical-button controller and ESPHome wrapper, independent LED controller/wrapper, and real Web component. The Web tests cover all eight optional live-entity combinations.
+- Protocol decoder and BLE request-serialization regressions passed; UI events do not modify BLE readiness, busy state or transaction correlation.
+- All **16/16** optional module combinations passed YAML validation and complete ESP-IDF compilation. Custom C++/header copies match the final tested sources byte-for-byte, and compiled units match the selected modules. See [test-matrix.json](test-matrix.json), run `ui-telemetry-20260921T084650Z-34a4e7655e64`.
+- Separate generic ESP32 headless, ATOMS3U and full M5StickC Plus builds passed. ATOMS3U remains compile-only.
+- The development full profile was installed on the original M5StickC Plus 1.1 using OTA. Serial startup identifies project version 2.1.0, and three authenticated read-only Web snapshots confirmed ready=true and unchanged readback/drafts **58.4 V / 5.1 A**. Measured output values were unavailable, with `Live output valid=false`, as expected while decoding is disabled.
+- The [Web screenshot](images/web-ui.png) is from that running device, through a GET-only local proxy serving unmodified device HTML/JavaScript and live SSE data. Cropping excludes the network diagnostics. The three LCD images are shared-view-model renders, **not physical photos or electrical measurement evidence**.
+- Operator verification of the revised physical LCD/button/LED behavior and nonzero measured-output mapping is still pending. Previous v2.0 LCD acceptance does not validate this revised screen.
+
+The current matrix report refers to this development source, while the historical CI and physical setpoint exercise below refer specifically to v2.0.0.
+
+---
+
+## v2.0.0 baseline
+
 ESPHome 2026.9.0 / ESP-IDF 5.5.5.
 
 ## Automated checks

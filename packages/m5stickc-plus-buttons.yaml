@@ -2,6 +2,16 @@
 # A=GPIO37, B=GPIO39, both externally pulled up and active-low:
 # https://docs.m5stack.com/en/core/m5stickc_plus
 # Depends only on charger_bus. No BLE, LCD, LED or web references.
+charger_buttons:
+  id: m5stick_buttons
+  event_bus_id: charger_bus
+
+globals:
+  - id: m5stick_button_edge_sequence
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+
 binary_sensor:
   - platform: gpio
     id: m5stick_button_a
@@ -15,10 +25,18 @@ binary_sensor:
       - delayed_off: 30ms
     on_press:
       - lambda: |-
-          using esphome::charger_event_bus::EventType;
-          if (id(charger_bus).request(EventType::REQUEST_READ_CONFIG, "button_a") == 0) {
-            ESP_LOGW("m5stick_buttons", "Read request could not be queued");
-          }
+          esphome::charger_event_bus::Event event{esphome::charger_event_bus::EventType::INPUT};
+          event.source = "buttons_gpio";
+          event.message = "a_down";
+          event.request_id = ++id(m5stick_button_edge_sequence);
+          if (!id(charger_bus).publish(event)) ESP_LOGW("m5stick_buttons", "Input edge dropped");
+    on_release:
+      - lambda: |-
+          esphome::charger_event_bus::Event event{esphome::charger_event_bus::EventType::INPUT};
+          event.source = "buttons_gpio";
+          event.message = "a_up";
+          event.request_id = ++id(m5stick_button_edge_sequence);
+          if (!id(charger_bus).publish(event)) ESP_LOGW("m5stick_buttons", "Input edge dropped");
 
   - platform: gpio
     id: m5stick_button_b
@@ -32,10 +50,15 @@ binary_sensor:
       - delayed_off: 30ms
     on_press:
       - lambda: |-
-          esphome::charger_event_bus::Event event{};
-          event.type = esphome::charger_event_bus::EventType::INPUT;
-          event.source = "button_b";
-          event.message = "pressed";
-          if (!id(charger_bus).publish(event)) {
-            ESP_LOGW("m5stick_buttons", "Button B event could not be queued");
-          }
+          esphome::charger_event_bus::Event event{esphome::charger_event_bus::EventType::INPUT};
+          event.source = "buttons_gpio";
+          event.message = "b_down";
+          event.request_id = ++id(m5stick_button_edge_sequence);
+          if (!id(charger_bus).publish(event)) ESP_LOGW("m5stick_buttons", "Input edge dropped");
+    on_release:
+      - lambda: |-
+          esphome::charger_event_bus::Event event{esphome::charger_event_bus::EventType::INPUT};
+          event.source = "buttons_gpio";
+          event.message = "b_up";
+          event.request_id = ++id(m5stick_button_edge_sequence);
+          if (!id(charger_bus).publish(event)) ESP_LOGW("m5stick_buttons", "Input edge dropped");

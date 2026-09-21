@@ -26,6 +26,13 @@ esphome:
               return;
             }
             delay(10);
+            id(m5stick_lcd_power_ready) = true;
+
+globals:
+  - id: m5stick_lcd_power_ready
+    type: bool
+    restore_value: false
+    initial_value: 'false'
 
 i2c:
   - id: m5stick_internal_i2c
@@ -55,8 +62,10 @@ font:
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
   - file: assets/Roboto.ttf
     id: m5stick_font_value
-    size: 28
+    size: 40
     glyphs: ' -.0123456789AV'
+
+charger_display:
 
 display:
   - platform: mipi_spi
@@ -80,41 +89,26 @@ display:
     color_depth: 16
     buffer_size: 25%
     data_rate: 10MHz
-    update_interval: 1s
+    update_interval: 250ms
     lambda: |-
-      const Color white(255, 255, 255);
-      const Color muted(160, 160, 160);
-      const Color green(64, 230, 140);
-      const Color amber(255, 185, 64);
-      const auto &state = id(charger_bus).snapshot();
-      const bool ready = state.ready;
-      const bool values_valid = ready && !std::isnan(state.voltage) &&
-          !std::isnan(state.current);
+      using namespace esphome::charger_display;
+      const bool display_ready = id(m5stick_lcd_power_ready) && !id(m5stick_lcd).is_failed();
+      {
+        esphome::charger_event_bus::Event event{esphome::charger_event_bus::EventType::UI_DISPLAY};
+        event.source = "lcd";
+        event.ui_display_ready = display_ready;
+        id(charger_bus).publish(event);
+      }
+      const auto view = make_view(id(charger_bus).snapshot(), millis());
       it.fill(Color::BLACK);
-      it.print(8, 4, id(m5stick_font_title), white, "LXY Charger");
-      it.print(232, 5, id(m5stick_font_small), ready ? green : amber,
-               TextAlign::TOP_RIGHT, ready ? "BLE READY" : "BLE WAIT");
-      it.line(8, 25, 232, 25, muted);
-      it.print(8, 31, id(m5stick_font_small), muted, "SET VOLTAGE");
-      it.print(128, 31, id(m5stick_font_small), muted, "SET CURRENT");
-      if (values_valid) {
-        it.printf(8, 45, id(m5stick_font_value), white, "%.1f V", state.voltage);
-        it.printf(128, 45, id(m5stick_font_value), white, "%.1f A", state.current);
-      } else {
-        it.print(8, 45, id(m5stick_font_value), muted, "--.- V");
-        it.print(128, 45, id(m5stick_font_value), muted, "--.- A");
+      for (size_t i = 0; i < view.count; ++i) {
+        const auto &label = view.labels[i];
+        auto *font = label.font == Font::LARGE ? id(m5stick_font_value) :
+            (label.font == Font::MEDIUM ? id(m5stick_font_title) : id(m5stick_font_small));
+        const Color ink = label.ink == Ink::WHITE ? Color(255, 255, 255) :
+            (label.ink == Ink::GREEN ? Color(64, 230, 140) :
+             (label.ink == Ink::AMBER ? Color(255, 185, 64) : Color(160, 160, 160)));
+        it.print(label.x, label.y, font, ink,
+                 label.right ? TextAlign::TOP_RIGHT : TextAlign::TOP_LEFT,
+                 label.text.c_str());
       }
-      // Status is rendered from the bus; this does not require the web module.
-      const bool problem = state.result == esphome::charger_event_bus::Result::REJECTED ||
-          state.result == esphome::charger_event_bus::Result::FAILED ||
-          state.result == esphome::charger_event_bus::Result::UNKNOWN;
-      it.print(8, 82, id(m5stick_font_small), ready && !problem ? green : amber,
-               ready ? (state.busy ? "Updating settings..." :
-                         (problem ? "Last request not verified" : "Readback setpoints"))
-                     : "Waiting for charger...");
-      if (!state.ip_address.empty()) {
-        it.printf(8, 101, id(m5stick_font_small), white, "IP: %s", state.ip_address.c_str());
-      } else {
-        it.print(8, 101, id(m5stick_font_small), white, "Offline / USB");
-      }
-      it.print(8, 119, id(m5stick_font_small), muted, "Configured values / read only");

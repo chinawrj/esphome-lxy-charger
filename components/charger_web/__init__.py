@@ -16,6 +16,9 @@ ConnectionSwitch = ns.class_("ConnectionSwitch", switch.Switch)
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(ChargerWeb),
     cv.Required("event_bus_id"): cv.use_id(ChargerEventBus),
+    cv.Optional("output_voltage"): sensor.sensor_schema(unit_of_measurement="V", accuracy_decimals=1, device_class="voltage", state_class="measurement"),
+    cv.Optional("output_current"): sensor.sensor_schema(unit_of_measurement="A", accuracy_decimals=1, device_class="current", state_class="measurement"),
+    cv.Optional("telemetry_valid"): binary_sensor.binary_sensor_schema(),
     cv.Required("configured_voltage"): sensor.sensor_schema(unit_of_measurement="V", accuracy_decimals=1),
     cv.Required("configured_current"): sensor.sensor_schema(unit_of_measurement="A", accuracy_decimals=1),
     cv.Required("requested_voltage"): number.number_schema(DraftNumber, unit_of_measurement="V"),
@@ -36,6 +39,13 @@ async def to_code(config):
     for key in ("configured_voltage", "configured_current"):
         child = await sensor.new_sensor(config[key])
         cg.add(getattr(var, "set_" + key)(child))
+    for key in ("output_voltage", "output_current"):
+        if key in config:
+            child = await sensor.new_sensor(config[key])
+            cg.add(getattr(var, "set_" + key)(child))
+    if "telemetry_valid" in config:
+        child = await binary_sensor.new_binary_sensor(config["telemetry_valid"])
+        cg.add(var.set_telemetry_valid(child))
     for key, voltage, minimum, maximum in (
         ("requested_voltage", True, 58.2, 58.4),
         ("requested_current", False, 4.9, 5.1),

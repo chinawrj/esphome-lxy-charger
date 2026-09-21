@@ -5,13 +5,13 @@ esphome:
   min_version: 2026.9.0
   project:
     name: local.lxy_charger
-    version: "2.0.0"
+    version: "2.1.0"
 
 external_components:
   - source:
       type: local
       path: components
-    components: [charger_event_bus, lxy_charger, charger_web]
+    components: [charger_event_bus, lxy_charger, charger_web, charger_display, charger_buttons, charger_indicator]
 
 logger:
   level: INFO

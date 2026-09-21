@@ -4,14 +4,15 @@
 
 ```mermaid
 flowchart LR
-    Button["Button · 可选"] -->|读取请求 / INPUT| Bus["事件队列 + 状态快照 · 必选"]
+    Button["Button · 可选"] -->|读取 / Apply / INPUT / UI_STATE| Bus["事件队列 + 状态快照 · 必选"]
     Web["Web · 可选"] -->|连接 / 查询 / Apply / 网络状态| Bus
     Bus -->|REQUEST_*| BLE["BLE 服务 · 必选"]
     BLE -->|CONNECTION / CONFIG / STATUS / RAW_STATUS| Bus
     BLE <-->|GATT| Charger["LXY BLE charger"]
     Bus -->|事件| Web
     Bus -->|快照| LCD["LCD · 可选"]
-    Bus -->|连接事件 + 快照| LED["LED · 可选"]
+    LCD -->|UI_DISPLAY 心跳| Bus
+    Bus -->|事务事件 + 快照| LED["LED · 可选"]
 ```
 
 ## 组件职责
@@ -22,9 +23,9 @@ flowchart LR
 | `lxy_charger` | BLE/GATT 连接、特征句柄、协议解码、查询与设置事务 | BLE client + bus |
 | `charger_web` | 网页实体、目标值草稿、用户操作适配 | bus + ESPHome 实体类型 |
 | Web YAML | Wi-Fi、网页资源、配网、网络地址事件 | 可选 Web 模块 |
-| LCD YAML | AXP192 屏幕电源、SPI、ST7789、字体、显示布局 | bus.snapshot() + 自身硬件 |
-| Button YAML | GPIO37/39 去抖与输入 | bus.request()/publish() + 自身硬件 |
-| LED YAML | GPIO10 active-low 输出 | bus 的 CONNECTION 事件和归一化快照 |
+| `charger_display` + LCD YAML | 纯 C++ 布局、AXP192、SPI、ST7789、字体、显示心跳 | bus.snapshot()/publish() + 自身硬件 |
+| `charger_buttons` + Button YAML | GPIO37/39、去抖边沿、草稿/确认状态机 | bus.request()/publish() + 自身硬件 |
+| `charger_indicator` + LED YAML | GPIO10 active-low 非阻塞闪烁 | bus 的结果事件和归一化快照 |
 
 硬件初始化只发生在所属包被包含时。LCD 的 AXP192 操作只设置屏幕 LDO 电压和使能位，保留其他电源及电池充电寄存器。删除 LCD 包也删除字体和显示驱动依赖。原始 M5StickC Plus 的引脚、电源和面板参数来自 [M5Stack 官方说明](https://docs.m5stack.com/en/core/m5stickc_plus)、[AXP192 初始化源码](https://github.com/m5stack/M5StickC-Plus/blob/master/src/AXP192.cpp)及 [M5GFX 面板配置](https://github.com/m5stack/M5GFX/blob/master/src/M5GFX.cpp)。
 
@@ -47,14 +48,18 @@ flowchart LR
 |---|---|---|
 | `REQUEST_CONNECT` | Web / 新增控制适配器 | BLE 启用连接 |
 | `REQUEST_DISCONNECT` | Web / 新增控制适配器 | BLE 禁用连接；不是关闭充电输出 |
-| `REQUEST_READ_CONFIG` | Web、Button A | BLE 发起只读查询 |
-| `REQUEST_APPLY_CONFIG` | Web | BLE 验证并提交事件中的两项设定值 |
+| `REQUEST_READ_CONFIG` | Web、Button B | BLE 发起只读查询 |
+| `REQUEST_APPLY_CONFIG` | Web、Button 确认 | BLE 验证并提交事件中的两项设定值 |
 | `CONNECTION` | BLE | 更新连接、就绪、忙碌状态；未就绪时使设定值失效 |
 | `CONFIG` | BLE | 更新设定值；不会自行把连接标成就绪 |
 | `STATUS` | BLE | 更新请求状态、结果与忙碌标记 |
 | `RAW_STATUS` | BLE | 保留尚未解码的原始状态帧；不推断测量值 |
-| `INPUT` | Button B、Web | 输入动作或草稿反馈；不覆盖 BLE 事务忙碌状态，也不触发设置 |
+| `INPUT` | Button GPIO、Web | 输入动作或草稿反馈；不覆盖 BLE 事务忙碌状态，也不触发设置 |
 | `NETWORK_STATE` | 可选网络模块 | 更新或清空 IP 地址 |
+| `TELEMETRY` | 经验证的测量适配器 | 独立的 `output_voltage/current`、`sampled_at`、`telemetry_valid`；不改配置 |
+| `UI_DISPLAY` | LCD | 每次绘制发布可用性；Button 在 3 秒无心跳后禁止编辑/提交 |
+| `UI_CONTROLS` | Button | 声明本地按键可用性；LCD-only 不提示不存在的按键 |
+| `UI_STATE` | Button | 选择、草稿、确认与提交态；不改 BLE ready/busy/配置或事务 ID |
 
 `Event` 含类型、`request_id`、来源 `source`、连接状态、设定值、`Result` 和文本 `message`。`Snapshot` 保存公共状态；LCD 只读取这个快照。网络事件使用 `connected` 表示网络可用，`message` 承载地址；无网络模块时 `ip_address` 为空。
 
@@ -115,3 +120,11 @@ if (id == 0) {
 原生 `tests/test_event_core.py` 使用模块替身检查 16 种组合的事件流、关联 ID、读回快照、断线失效、重连不重放，以及队列边界。这些是软件边界测试，不能替代真实 ESPHome 适配器编译，也不能验证 BLE 射频、屏幕朝向或实体按键。
 
 实机验证状态以[验证记录](verification.md)为准；ATOMS3U **尚未实机验证**。没有声明所有 16 个组合都已逐个刷机。具体构建结果应与源码提交及测试输出对应。
+
+## LCD、按钮与 LED 的独立性
+
+正常页大字只读取 `output_voltage/output_current`，小字 `Set` 只读取 `CONFIG` 的设定值。所有消费者必须使用 `snapshot.telemetry_fresh(millis())`：样本必须有效、已连接且年龄小于 6000 ms；否则显示 `--.-`，Web 发布 NaN。断连会清除实际读数，重新连接不会复活旧样本。当前协议字段是否经过实测确认，以协议与验证文档为准；增加事件接口不等于已经确认 `84` 的字段。
+
+按钮只通过事件获知 LCD 存在，不引用 display ID。LCD 的 250 ms 绘制心跳与按钮的 3 秒失效检查，避免显示停止更新后仍提交不可见草稿。没有 LCD 时按钮保留只读刷新。A 短按选择、长按进入编辑；编辑时 A/B 减/加 0.1，A 长按进入确认，再次 A 长按才提交，B 取消。无操作 30 秒、配置基线变化、失联、外部事务忙或显示失效会取消未提交草稿。`buttons_gpio` 的 `INPUT.request_id` 专用于单调 GPIO 边沿序号，丢边沿即取消，不作为 BLE 请求 ID。
+
+LED 的纯控制器消费事务结果并根据毫秒时间计算亮灭，不阻塞主循环。断连、连接等待、就绪、忙碌、验证完成、拒绝和失败各有节奏；具体时序见 [LED 组件](../components/charger_indicator/README.md)。LCD、按键与 LED 均不依赖 Web/Wi-Fi。

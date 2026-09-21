@@ -28,6 +28,9 @@ jobs:
       - run: python tests/test_event_core.py
       - run: python components/lxy_charger/test_protocol.py
       - run: python tests/test_ble_serialization.py
+      - run: python tests/test_telemetry_view.py
+      - run: python tests/test_local_controls.py
+      - run: python tests/test_web_telemetry.py
       - run: python tests/matrix.py --mode validate --jobs 2
 
   module-matrix:

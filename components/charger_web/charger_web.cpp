@@ -1,5 +1,6 @@
 #include "charger_web.h"
 #include "esphome/core/log.h"
+#include "esphome/core/hal.h"
 
 namespace esphome::charger_web {
 using charger_event_bus::Event;
@@ -20,6 +21,19 @@ void ChargerWeb::setup() {
   ready_sensor_->publish_state(false);
   voltage_sensor_->publish_state(NAN);
   current_sensor_->publish_state(NAN);
+  if (output_voltage_sensor_) output_voltage_sensor_->publish_state(NAN);
+  if (output_current_sensor_) output_current_sensor_->publish_state(NAN);
+  if (telemetry_sensor_) telemetry_sensor_->publish_state(false);
+}
+
+void ChargerWeb::loop() {
+  if (bus_ == nullptr) return;
+  if (output_published_valid_ && !bus_->snapshot().telemetry_fresh(millis())) {
+    output_published_valid_ = false;
+    if (output_voltage_sensor_) output_voltage_sensor_->publish_state(NAN);
+    if (output_current_sensor_) output_current_sensor_->publish_state(NAN);
+    if (telemetry_sensor_) telemetry_sensor_->publish_state(false);
+  }
 }
 
 bool ChargerWeb::valid_(float value, bool voltage) {
@@ -93,7 +107,7 @@ void ChargerWeb::on_event_(const Event &event) {
     case EventType::CONNECTION:
       ready_sensor_->publish_state(bus_->snapshot().ready);
       connection_switch_->publish_state(event.connected);
-      if (!event.ready) {
+      if (!bus_->snapshot().ready) {
         voltage_sensor_->publish_state(NAN);
         current_sensor_->publish_state(NAN);
       }
@@ -117,6 +131,16 @@ void ChargerWeb::on_event_(const Event &event) {
     case EventType::INPUT:
       if (event.source == "web") status_sensor_->publish_state(event.message);
       break;
+    case EventType::TELEMETRY: {
+      const auto &state = bus_->snapshot();
+      output_published_valid_ = state.telemetry_fresh(millis());
+      if (output_voltage_sensor_)
+        output_voltage_sensor_->publish_state(output_published_valid_ ? state.output_voltage : NAN);
+      if (output_current_sensor_)
+        output_current_sensor_->publish_state(output_published_valid_ ? state.output_current : NAN);
+      if (telemetry_sensor_) telemetry_sensor_->publish_state(output_published_valid_);
+      break;
+    }
     case EventType::RAW_STATUS:
       if (raw_sensor_) raw_sensor_->publish_state(event.message);
       break;

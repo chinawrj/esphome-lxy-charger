@@ -38,7 +38,11 @@ class ConnectionSwitch : public switch_::Switch {
 class ChargerWeb : public Component {
  public:
   void setup() override;
+  void loop() override;
   void set_event_bus(charger_event_bus::ChargerEventBus *bus) { bus_ = bus; }
+  void set_output_voltage(sensor::Sensor *value) { output_voltage_sensor_ = value; }
+  void set_output_current(sensor::Sensor *value) { output_current_sensor_ = value; }
+  void set_telemetry_valid(binary_sensor::BinarySensor *value) { telemetry_sensor_ = value; }
   void set_configured_voltage(sensor::Sensor *value) { voltage_sensor_ = value; }
   void set_configured_current(sensor::Sensor *value) { current_sensor_ = value; }
   void set_requested_voltage(DraftNumber *value) { voltage_number_ = value; }
@@ -56,6 +60,10 @@ class ChargerWeb : public Component {
   void status_(const char *message, charger_event_bus::Result result);
   static bool valid_(float value, bool voltage);
   charger_event_bus::ChargerEventBus *bus_{nullptr};
+  sensor::Sensor *output_voltage_sensor_{nullptr};
+  sensor::Sensor *output_current_sensor_{nullptr};
+  binary_sensor::BinarySensor *telemetry_sensor_{nullptr};
+  bool output_published_valid_{false};
   sensor::Sensor *voltage_sensor_{nullptr};
   sensor::Sensor *current_sensor_{nullptr};
   DraftNumber *voltage_number_{nullptr};

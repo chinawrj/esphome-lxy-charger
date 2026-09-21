@@ -21,3 +21,9 @@ python3 tests/test_event_core.py
 ```
 
 They cover all 16 LCD/Button/LED/Web combinations using independent module observers/producers, plus queue overflow, FIFO order, bounded/reentrant dispatch, request types and IDs, correlation, stale/offline readings and reconnect without replay. They do not emulate BLE packets or claim hardware verification. On a Mac with mismatched Command Line Tools, pass `--sdk` with the matching Xcode macOS SDK path.
+
+## Telemetry and optional UI events
+
+`voltage/current` are configuration values only. `TELEMETRY` carries separate `output_voltage/output_current`, `sampled_at` (boot-relative milliseconds), and `telemetry_valid`. Both measured values must be finite, valid and connected. Consumers use `snapshot.telemetry_fresh(now)`; the 6000 ms expiry uses unsigned subtraction across millis wrap. Disconnect clears measurements; CONFIG and raw frames cannot create them.
+
+`UI_DISPLAY` reports LCD availability on each draw. Buttons require a heartbeat younger than 3 seconds. `UI_CONTROLS` reports installed button capability so a display-only build omits button instructions. `UI_STATE` stores edit/confirm/submitting state, frozen drafts and their UI request correlation. None of these change BLE connection, busy state, setpoints or transaction correlation. In physical GPIO `INPUT` events only, `request_id` is an edge sequence used to detect missing edges.

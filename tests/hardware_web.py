@@ -33,6 +33,9 @@ import yaml
 
 
 ENTITIES = {
+    "output_voltage": ("sensor", "Output voltage"),
+    "output_current": ("sensor", "Output current"),
+    "telemetry_valid": ("binary_sensor", "Live output valid"),
     "voltage": ("sensor", "Readback set voltage"),
     "current": ("sensor", "Readback set current"),
     "ready": ("binary_sensor", "Charger ready"),
@@ -198,6 +201,10 @@ class Driver:
             "target_current": finite_value(data["target_current"]),
             "ble_enabled": data["ble"].get("value") is True,
         }
+        if self.args.telemetry:
+            result["output_voltage"] = finite_value(self.get("output_voltage"))
+            result["output_current"] = finite_value(self.get("output_current"))
+            result["telemetry_valid"] = self.get("telemetry_valid").get("value") is True
         self.last_snapshot = result
         self.event("snapshot", state=result)
         return result
@@ -289,6 +296,7 @@ def arguments():
     parser.add_argument("--prefix", default="", help="Exact optional prefix before each entity name, including a trailing space if needed")
     workspace = Path(__file__).resolve().parents[1]
     parser.add_argument("--secrets", type=Path, default=workspace / "secrets.yaml")
+    parser.add_argument("--telemetry", action="store_true", help="Include optional v2.1 live-output entities")
     parser.add_argument("--samples", type=int, default=3, help="Read-only snapshot count")
     parser.add_argument("--http-timeout", type=float, default=3.0)
     parser.add_argument("--step-timeout", type=float, default=20.0)

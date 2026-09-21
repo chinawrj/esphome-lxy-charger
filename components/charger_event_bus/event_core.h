@@ -15,10 +15,13 @@ namespace esphome::charger_event_bus {
 
 enum class EventType {
   REQUEST_CONNECT, REQUEST_DISCONNECT, REQUEST_READ_CONFIG, REQUEST_APPLY_CONFIG,
-  CONNECTION, CONFIG, STATUS, RAW_STATUS, INPUT, NETWORK_STATE
+  CONNECTION, CONFIG, STATUS, RAW_STATUS, INPUT, NETWORK_STATE,
+  TELEMETRY, UI_DISPLAY, UI_STATE, UI_CONTROLS
 };
 
 enum class Result { INFO, ACCEPTED, VERIFIED, REJECTED, FAILED, UNKNOWN };
+enum class UiMode { VIEW, EDIT, CONFIRM, SUBMITTING, REFRESHING };
+enum class UiField { VOLTAGE, CURRENT };
 
 struct Event {
   EventType type{EventType::STATUS};
@@ -28,6 +31,15 @@ struct Event {
   bool busy{false};
   float voltage{NAN};
   float current{NAN};
+  // Measured output is separate from configuration, even when numerically equal.
+  float output_voltage{NAN};
+  float output_current{NAN};
+  uint32_t sampled_at{0};
+  bool telemetry_valid{false};
+  UiMode ui_mode{UiMode::VIEW};
+  UiField ui_field{UiField::VOLTAGE};
+  bool ui_display_ready{false};
+  bool ui_buttons_ready{false};
   Result result{Result::INFO};
   std::string message;
   std::string source;
@@ -39,11 +51,28 @@ struct Snapshot {
   bool busy{false};
   float voltage{NAN};
   float current{NAN};
+  float output_voltage{NAN};
+  float output_current{NAN};
+  uint32_t sampled_at{0};
+  bool telemetry_valid{false};
+  bool ui_display_ready{false};
+  bool ui_buttons_ready{false};
+  UiMode ui_mode{UiMode::VIEW};
+  UiField ui_field{UiField::VOLTAGE};
+  float ui_voltage{NAN};
+  float ui_current{NAN};
+  uint32_t ui_request_id{0};
+  Result ui_result{Result::INFO};
+  std::string ui_message;
   std::string status;
   std::string raw_status;
   std::string ip_address;
   uint32_t last_request_id{0};
   Result result{Result::INFO};
+
+  bool telemetry_fresh(uint32_t now, uint32_t max_age_ms = 6000) const {
+    return connected && telemetry_valid && uint32_t(now - sampled_at) < max_age_ms;
+  }
 };
 
 class EventCore {
@@ -129,6 +158,10 @@ class EventCore {
         this->snapshot_.ready = event.connected && event.ready;
         this->snapshot_.busy = event.connected && event.busy;
         if (!this->snapshot_.ready) this->snapshot_.voltage = this->snapshot_.current = NAN;
+        if (!this->snapshot_.connected) {
+          this->snapshot_.telemetry_valid = false;
+          this->snapshot_.output_voltage = this->snapshot_.output_current = NAN;
+        }
         break;
       case EventType::CONFIG:
         // A delayed configuration event cannot resurrect readings on a lost
@@ -150,6 +183,28 @@ class EventCore {
         break;
       case EventType::NETWORK_STATE:
         this->snapshot_.ip_address = event.connected ? event.message : std::string{};
+        break;
+      case EventType::TELEMETRY:
+        this->snapshot_.telemetry_valid = this->snapshot_.connected && event.telemetry_valid &&
+            std::isfinite(event.output_voltage) && std::isfinite(event.output_current);
+        this->snapshot_.output_voltage = this->snapshot_.telemetry_valid ? event.output_voltage : NAN;
+        this->snapshot_.output_current = this->snapshot_.telemetry_valid ? event.output_current : NAN;
+        this->snapshot_.sampled_at = event.sampled_at;
+        break;
+      case EventType::UI_DISPLAY:
+        this->snapshot_.ui_display_ready = event.ui_display_ready;
+        break;
+      case EventType::UI_CONTROLS:
+        this->snapshot_.ui_buttons_ready = event.ui_buttons_ready;
+        break;
+      case EventType::UI_STATE:
+        this->snapshot_.ui_mode = event.ui_mode;
+        this->snapshot_.ui_field = event.ui_field;
+        this->snapshot_.ui_voltage = event.voltage;
+        this->snapshot_.ui_current = event.current;
+        this->snapshot_.ui_request_id = event.request_id;
+        this->snapshot_.ui_result = event.result;
+        this->snapshot_.ui_message = event.message;
         break;
       default:
         // Requests and physical-input events convey intent only. BLE owns

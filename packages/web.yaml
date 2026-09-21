@@ -38,6 +38,15 @@ charger_web:
   connection_switch:
     name: "BLE connection"
     id: charger_connection_enabled
+  output_voltage:
+    name: "Output voltage"
+    id: charger_output_voltage
+  output_current:
+    name: "Output current"
+    id: charger_output_current
+  telemetry_valid:
+    name: "Live output valid"
+    id: charger_telemetry_valid
   configured_voltage:
     name: "Readback set voltage"
     id: charger_voltage
