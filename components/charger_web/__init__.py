@@ -50,7 +50,7 @@ async def to_code(config):
         cg.add(var.set_telemetry_valid(child))
     for key, voltage, minimum, maximum in (
         ("requested_voltage", True, 50.0, 93.0),
-        ("requested_current", False, 4.9, 5.1),
+        ("requested_current", False, 1.0, 10.0),
     ):
         child = await number.new_number(config[key], var, voltage, min_value=minimum, max_value=maximum, step=0.1)
         cg.add(getattr(var, "set_" + key)(child))

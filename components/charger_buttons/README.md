@@ -37,7 +37,7 @@ after 30 seconds without an action, and consumes the return key without also
 refreshing, connecting or editing.
 
 Entering edit freezes both values from the same current readback. Only the
-selected value changes; bounds are 50.0–93.0 V and 4.9–5.1 A. Unchanged drafts
+selected value changes; bounds are 50.0–93.0 V and 1.0–10.0 A. Unchanged drafts
 are discarded without a write. Drafts expire after 30 seconds without an action.
 Loss of readiness, another operation becoming busy, a changed readback baseline,
 or loss of display availability cancels an unsubmitted draft. Submitted requests

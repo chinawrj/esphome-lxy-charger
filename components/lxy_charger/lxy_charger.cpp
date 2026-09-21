@@ -9,8 +9,8 @@ static constexpr uint32_t CONNECTION_REQUEST_TIMEOUT_MS = 30000;
 static constexpr uint32_t STATUS_INTERVAL_MS = 2000;
 static constexpr uint16_t MIN_VOLTAGE = 500;
 static constexpr uint16_t MAX_VOLTAGE = 930;
-static constexpr uint16_t MIN_CURRENT = 49;
-static constexpr uint16_t MAX_CURRENT = 51;
+static constexpr uint16_t MIN_CURRENT = 10;
+static constexpr uint16_t MAX_CURRENT = 100;
 
 void LXYCharger::setup() {
   this->node_state = esp32_ble_tracker::ClientState::IDLE;
@@ -32,7 +32,7 @@ void LXYCharger::setup() {
 
 void LXYCharger::dump_config() {
   ESP_LOGCONFIG(TAG, "LXY BLE service %s: FFF0 / notify FFF1 / write FFF2", this->parent()->address_str());
-  ESP_LOGCONFIG(TAG, "Event requests only; configured limits 50.0..93.0 V / 4.9..5.1 A");
+  ESP_LOGCONFIG(TAG, "Event requests only; configured limits 50.0..93.0 V / 1.0..10.0 A");
 }
 
 bool LXYCharger::ready_() const {

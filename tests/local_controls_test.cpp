@@ -87,6 +87,20 @@ struct Wrapper {
 
 int main() {
   for (bool upper : {false, true}) {
+    Pure f; f.state.current = upper ? 9.9f : 1.1f;
+    f.press(true); f.press(true, true); assert(f.mode() == UiMode::EDIT);
+    f.press(!upper); assert(f.controller.ui_event().current == (upper ? 10.0f : 1.0f));
+    f.press(!upper); assert(f.controller.ui_event().ui_notice == UiNotice::LIMIT);
+    f.press(true, true); assert(f.mode() == UiMode::CONFIRM && f.requests.empty());
+    f.press(true, true); assert(f.requests.size() == 1);
+    assert(f.requests[0].current == (upper ? 10.0f : 1.0f) && f.requests[0].voltage == 58.4f);
+  }
+  for (float value : {0.9f, 10.1f, 1.05f}) {
+    Pure f; f.state.current = value; f.press(true, true);
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+  }
+
+  for (bool upper : {false, true}) {
     Pure f; f.state.voltage = upper ? 92.9f : 50.1f;
     f.press(true, true); assert(f.mode() == UiMode::EDIT);
     f.press(!upper); assert(f.controller.ui_event().voltage == (upper ? 93.0f : 50.0f));
@@ -153,10 +167,10 @@ int main() {
     assert(f.mode() == UiMode::VIEW && f.requests.empty());
     f.press(true); f.press(true, true);
     assert(f.controller.ui_event().ui_field == UiField::CURRENT);
-    for (int i = 0; i < 9; ++i) f.press(true);
-    assert(f.controller.ui_event().current == 4.9f);
-    for (int i = 0; i < 9; ++i) f.press(false);
-    assert(f.controller.ui_event().current == 5.1f && f.controller.ui_event().voltage == 58.4f);
+    for (int i = 0; i < 100; ++i) f.press(true);
+    assert(f.controller.ui_event().current == 1.0f);
+    for (int i = 0; i < 100; ++i) f.press(false);
+    assert(f.controller.ui_event().current == 10.0f && f.controller.ui_event().voltage == 58.4f);
     assert(f.requests.empty());
   }
   { // No LCD package means read-only operation, even after repeated long presses.

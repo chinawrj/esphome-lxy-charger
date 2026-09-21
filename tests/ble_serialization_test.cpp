@@ -89,6 +89,20 @@ struct Fixture {
 };
 
 int main() {
+  for (uint16_t raw = 10; raw <= 100; ++raw) {
+    Fixture f; const auto id = f.request(EventType::REQUEST_APPLY_CONFIG, 93.0f, raw / 10.0f);
+    assert(f.result(id, Result::ACCEPTED));
+    assert(f.commands() == std::vector<uint8_t>{3});
+    assert(native_writes[0][7] == 0 && native_writes[0][8] == raw);
+    f.config(930, raw, 0x83); f.tick(100); f.config(930, raw);
+    assert(f.result(id, Result::VERIFIED) && f.bus.snapshot().current == raw / 10.0f);
+    assert((f.commands() == std::vector<uint8_t>{3, 2}));
+  }
+  for (float value : {0.9f, 10.1f, 1.05f, 9.95f, NAN, INFINITY}) {
+    Fixture f; const auto id = f.request(EventType::REQUEST_APPLY_CONFIG, 58.4f, value);
+    assert(f.result(id, Result::REJECTED) && native_writes.empty());
+  }
+
   // Every permitted tenth, including the two-byte endpoints, traverses real BLE
   // validation, one write, matching echo and independent readback on a fake link.
   for (uint16_t raw = 500; raw <= 930; ++raw) {

@@ -263,7 +263,12 @@ int main() {
     }
     for (float value : {49.9f, 93.1f, 50.05f, 92.95f, NAN, INFINITY})
       assert(!f.web.stage(true, value));
-    assert(!f.web.stage(false, 4.8f) && !f.web.stage(false, 5.2f));
+    for (int raw = 10; raw <= 100; ++raw) {
+      assert(f.web.stage(false, raw / 10.0f)); f.drain();
+      assert(f.requested_a.state == raw / 10.0f && f.configured_a.state == 5.1f);
+    }
+    for (float value : {0.9f, 10.1f, 1.05f, 9.95f, NAN, INFINITY})
+      assert(!f.web.stage(false, value));
     f.drain(); assert(requests == 0);
   }
 
