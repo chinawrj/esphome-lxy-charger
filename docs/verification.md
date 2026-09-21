@@ -1,5 +1,20 @@
 # Verification record
 
+## Optional board battery voltage and signed current — 2026-09-21
+
+Code commit `f26cfb3` adds the original M5StickC Plus 1.1 AXP192 battery producer and a home footer. Board battery readings use a separate `BOARD_BATTERY` event and timestamp; they neither populate external charger output channels nor depend on BLE connectivity. Positive mA means charging the board battery, negative means discharging. The dedicated power meter is unchanged.
+
+- Native tests compile the real producer, reducer and display against fake I2C. They cover 12/13-bit conversion, reserved-bit masking, signed charge-minus-discharge current, zero, battery absence, ADC enable preserving other bits, no pre-enable sample, wrong chip ID, each read failure, write failure, recovery, invalid typed samples, six-second expiry and clock rollover. The only producer write is ADC register `0x82`; charger control, voltage/current limits and power rails are not changed.
+- All **32 event-routing profiles**, existing real-BLE transaction tests, Button/LED tests, telemetry-view tests and 32 Web-entity profiles passed. Fifteen layout renders passed glyph and text-bound checks. The new charging/discharging/unavailable screenshots are synthetic previews, not physical LCD photographs.
+- All **32/32 module combinations** passed YAML validation, full ESP-IDF compilation, byte-for-byte custom source checks and compiled-component inclusion checks. [Current matrix](test-matrix.json): `board-battery-20260921T113211Z-e34e444fdb64`; source manifest `e34e444fdb64e8176a5e11e4641f316dd9de57e1a0934935e2c5d21f25c33748` stayed unchanged throughout the run.
+- Separate M5StickC Plus, ATOMS3U and generic ESP32 builds passed. Only M5Stick was uploaded; the other two builds remain compile-only.
+- Successful M5Stick OTA installed the **19:32:12 +0800** build, configuration hash **`0xbf779a57`**. The first upload was rolled back after opening the USB serial port reset the board before boot confirmation. A second upload with the serial port already open ran the new battery producer. Actual samples read **4.158 V**, **0.0 mA charge**, **0.0–0.5 mA discharge**, giving **0.0 to −0.5 mA net**. A later USB reconnection still produced new-driver readings at **4.154 V**; serial logs then confirmed **“Boot seems successful”**, completing the OTA boot confirmation. This verifies the live reading path, not external-meter calibration or a physical positive-charge test.
+- Read-only post-upload Web checks confirmed `Connected (ready)`, **60.2 V / 5.9 A** setpoint readback, voltage range **50.0–93.0 V**, current range **1.0–10.0 A**, both in 0.1 steps. This update sent no charger-setting command. Operator acceptance of the new footer and a physical charge/discharge transition have not yet been reported.
+- Independent Linux CI [run 35595178987](https://github.com/chinawrj/esphome-lxy-charger/actions/runs/35595178987) passed the native-test/YAML-validation job for `f26cfb3`. Remote firmware jobs were still queued/running when recorded; full remote CI completion is not claimed.
+- External charger live-current decoding remains deferred by the operator; adding the board's own battery current does not change that scope. Register sources and sign convention are linked in the [driver documentation](../components/m5stick_battery/README.md).
+
+---
+
 ## Power-focused meter and expanded setpoint ranges — 2026-09-21
 
 Code commit `77fe8c4` includes the power-focused layout (`80e84fc`) and requested setting ranges: **50.0–93.0 V / 1.0–10.0 A**, in 0.1 steps. Voltage follows the operator-reported 50–93 V nameplate. Current follows the operator's explicit 1–10 A request; the reported nameplate says 3–10 A. Acceptance below 3 A has not been physically tested.
@@ -7,7 +22,7 @@ Code commit `77fe8c4` includes the power-focused layout (`80e84fc`) and requeste
 - Native real-BLE fake-transport tests passed for all **431 voltage steps and 91 current steps**, including single-send payload bytes, matching echo, independent readback, and rejected nonfinite/off-step/out-of-bounds requests. This is not a claim of testing every V/A pair or electrically operating the charger throughout these ranges.
 - Web staging tests cover those same steps without automatic Apply. Real button/controller tests cover both voltage and current endpoints, stopping at bounds, a separate confirmation gesture, unchanged companion setpoints and rejection of invalid baselines. Existing transaction, wake and telemetry regressions passed.
 - The meter gives power **76 px** type, with **28 px V/A on one footer row**; longer power strings shrink. All twelve shared-view-model render scenes passed text bounds and glyph checks. Meter previews are synthetic/layout evidence, not physical LCD photographs. The 15-second idle entry and consumed wake gesture are unchanged.
-- All **16/16 module combinations** passed YAML validation, full ESP-IDF compilation and exact source-copy/compiled-component checks. [Current matrix](test-matrix.json): `voltage-current-range-20260921T111823Z-f8dab5dbffd2`. Separate M5StickC Plus, ATOMS3U and generic ESP32 builds passed; ATOMS3U remains compile-only.
+- All **16/16 module combinations** passed YAML validation, full ESP-IDF compilation and exact source-copy/compiled-component checks. [Archived range matrix](https://github.com/chinawrj/esphome-lxy-charger/blob/ef35b26/docs/test-matrix.json): `voltage-current-range-20260921T111823Z-f8dab5dbffd2`. Separate M5StickC Plus, ATOMS3U and generic ESP32 builds passed; ATOMS3U remains compile-only.
 - M5Stick OTA succeeded for the final 19:18:24 +0800 build (configuration hash `0x5648fe93`). Read-only device Web metadata confirms voltage min/max/step **50.0/93.0/0.1**, current **1.0/10.0/0.1**, and `Connected (ready)`. Configuration readback remained **58.2 V / 5.1 A**. No setting command was sent for these updates.
 - Current telemetry remains deferred; power stays unavailable until both same-sample output channels are fresh and valid. Voltage remains provisional, marked `V*`. Expanded-range physical writes, new subjective layout acceptance and this revision's separate GitHub CI completion are not claimed here.
 
@@ -75,7 +90,7 @@ ESPHome 2026.9.0 / ESP-IDF 5.5.5.
 - Full ESP32 firmware compilation: 16/16 PASS. Compiled component copies were compared with final repository source.
 - ATOMS3U / ESP32-S3 build: PASS; no ATOMS3U hardware was connected.
 
-See [test-matrix.json](test-matrix.json) for the matrix results. The bit order is LCD, Button, LED, Web; BLE and the event bus are always present. Matrix tests use example credentials and do not upload firmware.
+See the [archived v2.0 matrix](https://github.com/chinawrj/esphome-lxy-charger/blob/d95569441e9371ad8649ee7e20e29b116d0fda17/docs/test-matrix.json) for these historical matrix results. The bit order is LCD, Button, LED, Web; BLE and the event bus are always present. Matrix tests use example credentials and do not upload firmware.
 
 Independent Linux CI also passed **18/18 jobs** for code commit `d95569441e9371ad8649ee7e20e29b116d0fda17`: native tests and YAML validation, all sixteen firmware combinations, and ATOMS3U compilation. [GitHub Actions run 35574823068](https://github.com/chinawrj/esphome-lxy-charger/actions/runs/35574823068). Subsequent verification-document changes do not alter that tested code.
 
