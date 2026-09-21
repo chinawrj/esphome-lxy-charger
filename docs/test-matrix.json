@@ -1,0 +1,193 @@
+{
+  "esphome": "2026.9.0",
+  "framework": "ESP-IDF 5.5.5",
+  "required": [
+    "ble",
+    "event_bus"
+  ],
+  "optional_bits": [
+    "lcd",
+    "button",
+    "led",
+    "web"
+  ],
+  "source_commit": "325aa1c",
+  "coverage": "Native event routing and full firmware compilation; not sixteen physical uploads.",
+  "cases": [
+    {
+      "mask": 0,
+      "modules": [],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 12.5,
+      "final_source_verified": true
+    },
+    {
+      "mask": 1,
+      "modules": [
+        "lcd"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 14.2,
+      "final_source_verified": true
+    },
+    {
+      "mask": 2,
+      "modules": [
+        "button"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 12.6,
+      "final_source_verified": true
+    },
+    {
+      "mask": 3,
+      "modules": [
+        "lcd",
+        "button"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 14.1,
+      "final_source_verified": true
+    },
+    {
+      "mask": 4,
+      "modules": [
+        "led"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 12.4,
+      "final_source_verified": true
+    },
+    {
+      "mask": 5,
+      "modules": [
+        "lcd",
+        "led"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 14.0,
+      "final_source_verified": true
+    },
+    {
+      "mask": 6,
+      "modules": [
+        "button",
+        "led"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 12.5,
+      "final_source_verified": true
+    },
+    {
+      "mask": 7,
+      "modules": [
+        "lcd",
+        "button",
+        "led"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 14.0,
+      "final_source_verified": true
+    },
+    {
+      "mask": 8,
+      "modules": [
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 67.6,
+      "final_source_verified": true
+    },
+    {
+      "mask": 9,
+      "modules": [
+        "lcd",
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 61.7,
+      "final_source_verified": true
+    },
+    {
+      "mask": 10,
+      "modules": [
+        "button",
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 65.8,
+      "final_source_verified": true
+    },
+    {
+      "mask": 11,
+      "modules": [
+        "lcd",
+        "button",
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 60.1,
+      "final_source_verified": true
+    },
+    {
+      "mask": 12,
+      "modules": [
+        "led",
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 44.6,
+      "final_source_verified": true
+    },
+    {
+      "mask": 13,
+      "modules": [
+        "lcd",
+        "led",
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 49.2,
+      "final_source_verified": true
+    },
+    {
+      "mask": 14,
+      "modules": [
+        "button",
+        "led",
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 39.5,
+      "final_source_verified": true
+    },
+    {
+      "mask": 15,
+      "modules": [
+        "lcd",
+        "button",
+        "led",
+        "web"
+      ],
+      "mode": "compile",
+      "status": "PASS",
+      "seconds": 34.3,
+      "final_source_verified": true
+    }
+  ]
+}
