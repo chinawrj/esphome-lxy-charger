@@ -1,11 +1,24 @@
 # Verification record
 
+## Idle V/A/W meter follow-up — 2026-09-21
+
+Code commit `b2b785b` adds a 15-second home-page inactivity transition to a dedicated V/A/W meter. The first press wakes home and consumes the entire gesture; no BLE request or editing action accompanies wake. Button drives `UI_STATE`; LCD reads the event snapshot. The earlier 10% LED duty adjustment is retained.
+
+- Native real-controller/wrapper tests passed for the exact idle boundary, wake on short/long/combined presses, next separate button action, editing isolation, absent LCD, heartbeat loss, and timer/sequence rollover. Existing transaction and button safety regressions also passed.
+- The real reducer/view tests passed for same-sample `V × A`, separation from setpoints, voltage-only data, real zero values, stale data and disconnection. Missing current always leaves power unavailable. Event-core, BLE and all 32 Web-entity tests also passed.
+- All **16/16 module combinations** passed YAML validation, full ESP-IDF builds and exact source-copy/compiled-component checks. [Current matrix](test-matrix.json): `idle-meter-20260921T105257Z-5f4b4679a5aa`. This report supersedes the historical matrices below.
+- The full M5StickC Plus 1.1 build passed and was installed by successful OTA, configuration hash `0xe79fa07d`. Read-only post-OTA checks reported `Connected (ready)`. No charger-setting write was sent for this update.
+- Eleven shared-view-model layout scenes passed text bounds and glyph checks, including voltage-only, synthetic V/A/W and stale meter pages. These are previews, not hardware photos. Physical idle/wake behavior and subjective legibility have been requested from the operator but are not yet independently confirmed.
+- Voltage is still provisional, marked `V*` on the meter; current decoding remains deferred. The local test results above do not claim completion of this revision's separate GitHub Actions run.
+
+---
+
 ## v2.1 voltage decoder and local controls — 2026-09-21
 
 The operator deferred live-current decoding until a later battery test, declined further mini-program use, and requested implementation from the new restart data. This revision decodes **voltage only**, with an explicit inferred-mapping label. It does not certify electrical accuracy. Current remains unavailable; current setpoint control is unchanged.
 
 - Native tests passed for the real BLE parser/transaction service, event core, display, Button/LED wrappers and Web adapter. Captured restart bytes exercise 0.0/0.1/25.9/58.7–59.0 V. Tests reject wrong lengths, damaged checksums and out-of-envelope values; cover channel masks, discarded unsupported current values, capability changes, stale/offline data, and all 32 optional Web-entity combinations.
-- All **16/16** module combinations passed YAML validation, full ESP-IDF compilation, included-component checks and byte-for-byte source-copy checks. [Current matrix](test-matrix.json): `voltage-restart-20260921T094715Z-7bac925a9f60`. Independent generic ESP32, ATOMS3U and full M5StickC Plus builds passed. ATOMS3U is compile-only.
+- All **16/16** module combinations passed YAML validation, full ESP-IDF compilation, included-component checks and byte-for-byte source-copy checks. [Archived v2.1 matrix](https://github.com/chinawrj/esphome-lxy-charger/blob/78432b775592cac114ed1ad861a2d2cc317ecd79/docs/test-matrix.json): `voltage-restart-20260921T094715Z-7bac925a9f60`. Independent generic ESP32, ATOMS3U and full M5StickC Plus builds passed. ATOMS3U is compile-only.
 - The final full profile was installed on the original M5StickC Plus 1.1 through successful OTA, configuration hash `0x388b6511`. No charger-setting write was sent for this decoder update.
 - After the operator restarted the charger again, the device reconnected automatically. A 180-second read-only Web observation recorded **131 polls**. Among **106 ready/valid observations bracketed by identical raw frames, 106 matched** the voltage formula and kept current unavailable; no checked mismatch occurred. Observed decoded values included 0.0, 44.2, 58.7, 58.8, 58.9 and 59.0 V. Changing frames were excluded from comparison because the HTTP reads are sequential. These are software-path checks, not independent voltage measurements.
 - The operator explicitly reported **58.9 V on the physical LCD** after the second restart. Earlier in this revision cycle the operator confirmed the Chinese display, button responses and steady red LED. This does not claim a new physical Button Apply exercise; explicit setting writes/readback were exercised in the historical baseline below.
