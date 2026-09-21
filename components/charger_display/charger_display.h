@@ -8,6 +8,20 @@
 namespace esphome::charger_display {
 // Shared by the hardware renderer and documented previews. Application input
 // comes only from typed events, never from another optional module's objects.
+// Original M5StickC Plus: only LDO2 (0x12 bit 2) powers the backlight.
+// Keep LCD logic, MCU and every other rail unchanged. Retry after any I2C error.
+template<typename Device> bool set_backlight(Device &device, bool on) {
+  uint8_t rails = 0, verified = 0;
+  if (!device.read_byte(0x12, &rails)) return false;
+  const uint8_t next = on ? uint8_t(rails | 0x04) : uint8_t(rails & ~0x04);
+  if (next != rails && !device.write_byte(0x12, next)) return false;
+  return device.read_byte(0x12, &verified) && verified == next;
+}
+inline bool backlight_requested(const charger_event_bus::Snapshot &state) {
+  // Without working buttons there is no local wake source: keep the light on.
+  return !state.ui_buttons_ready || state.ui_backlight_on;
+}
+
 enum class Font { SMALL, MEDIUM, LARGE, HERO, POWER };
 enum class Ink { WHITE, MUTED, GREEN, AMBER };
 struct Label {

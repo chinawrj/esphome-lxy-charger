@@ -1,5 +1,6 @@
 #include "esphome/components/charger_buttons/charger_buttons.h"
 #include "esphome/components/charger_indicator/charger_indicator.h"
+#include "../components/charger_display/charger_display.h"
 #include <cassert>
 #include <cstdio>
 #include <vector>
@@ -86,6 +87,84 @@ struct Wrapper {
 };
 
 int main() {
+  { // Five-minute timer spans Home -> Meter and ignores ongoing telemetry.
+    Pure f;
+    f.now = 15000; f.heartbeat(); assert(f.mode() == UiMode::METER);
+    f.now = 299999; f.heartbeat(); assert(f.controller.ui_event().ui_backlight_on);
+    f.now = 300000; f.heartbeat(); assert(!f.controller.ui_event().ui_backlight_on);
+    Event telemetry{}; telemetry.type = EventType::TELEMETRY;
+    f.controller.observe(telemetry, f.state, ++f.now);
+    assert(!f.controller.ui_event().ui_backlight_on && f.requests.empty());
+  }
+  for (bool a : {false, true}) for (bool long_press : {false, true}) {
+    Pure f; f.now = 300000; f.heartbeat();
+    assert(!f.controller.ui_event().ui_backlight_on);
+    f.press(a, long_press);
+    assert(f.controller.ui_event().ui_backlight_on && f.mode() == UiMode::VIEW && f.requests.empty());
+    f.press(false); assert(f.requests.size() == 1); // Only the next distinct gesture acts.
+  }
+  { // A simultaneous/held wake gesture is consumed in full.
+    Pure f; f.now = 300000; f.heartbeat();
+    f.edge(true, true); f.edge(false, true); f.now += 1000; f.heartbeat();
+    f.edge(true, false); f.edge(false, false);
+    assert(f.controller.ui_event().ui_backlight_on && f.requests.empty() && f.mode() == UiMode::VIEW);
+    f.now += 299999; f.heartbeat(); assert(f.controller.ui_event().ui_backlight_on);
+    ++f.now; f.heartbeat(); assert(!f.controller.ui_event().ui_backlight_on);
+  }
+  { // Wraparound, missing input edge and lost LCD heartbeat recover safely.
+    Pure f; f.now = UINT32_MAX-1000; f.edge(true, true); f.edge(true, false);
+    f.now += 299999; f.heartbeat(); assert(f.controller.ui_event().ui_backlight_on);
+    ++f.now; f.heartbeat(); assert(!f.controller.ui_event().ui_backlight_on);
+    ++f.sequence; f.edge(false, true); f.edge(false, false);
+    assert(f.controller.ui_event().ui_backlight_on && f.requests.empty());
+    f.now += 300000; f.heartbeat(); assert(!f.controller.ui_event().ui_backlight_on);
+    f.now += 3000; f.controller.tick(f.now, f.state); assert(f.controller.ui_event().ui_backlight_on);
+  }
+  { // No LCD, active hold, Help/edit and pending operations never blank controls.
+    Pure f; f.display_enabled = false; f.heartbeat(false); f.now = 300000;
+    f.controller.tick(f.now, f.state); assert(f.controller.ui_event().ui_backlight_on);
+    f.heartbeat(); f.edge(true, true); f.now += 300000; f.heartbeat();
+    assert(f.controller.ui_event().ui_backlight_on); f.edge(true, false);
+    f.press(false, true); assert(f.mode() == UiMode::HELP);
+    f.now += 300000; f.heartbeat(); assert(f.controller.ui_event().ui_backlight_on);
+    f.press(true, true); assert(f.mode() == UiMode::EDIT);
+    f.now += 300000; f.heartbeat(); assert(f.controller.ui_event().ui_backlight_on);
+    f.press(false); f.now += 300000; f.heartbeat();
+    assert(f.controller.ui_event().ui_backlight_on && f.requests.size() == 1);
+  }
+  { // Real wrapper -> event snapshot -> LCD backlight request, independent of BLE.
+    Wrapper f; f.ready(); f.heartbeat(); fake_millis = 300000; f.heartbeat(); f.buttons.loop(); f.drain();
+    assert(!f.bus.snapshot().ui_backlight_on && !charger_display::backlight_requested(f.bus.snapshot()));
+    f.press(true, true); assert(charger_display::backlight_requested(f.bus.snapshot()) && f.requests.empty());
+    Event off{}; off.type = EventType::UI_STATE; off.ui_backlight_on = false; f.emit(off);
+    Event lost{}; lost.type = EventType::UI_CONTROLS; lost.ui_buttons_ready = false; f.emit(lost);
+    assert(charger_display::backlight_requested(f.bus.snapshot()));
+    Wrapper no_buttons(false); no_buttons.emit(off); assert(charger_display::backlight_requested(no_buttons.bus.snapshot()));
+  }
+  { // Exhaustive rail masks: only backlight bit can change; failed I2C is retried.
+    struct Device {
+      uint8_t rails{0}; bool fail_read{false}, fail_write{false}, corrupt_readback{false}; unsigned writes{0};
+      bool read_byte(uint8_t reg, uint8_t *value) {
+        assert(reg == 0x12); if (fail_read) return false;
+        *value = rails; if (corrupt_readback && writes) *value ^= 0x04; return true;
+      }
+      bool write_byte(uint8_t reg, uint8_t value) {
+        assert(reg == 0x12); ++writes; if (fail_write) return false; rails = value; return true;
+      }
+    };
+    for (unsigned mask = 0; mask < 256; ++mask) for (bool on : {false, true}) {
+      Device d; d.rails = mask; assert(charger_display::set_backlight(d, on));
+      assert((d.rails & ~0x04) == (mask & ~0x04) && bool(d.rails & 0x04) == on);
+    }
+    Device d; d.rails = 0x4f; d.fail_read = true;
+    assert(!charger_display::set_backlight(d, false) && d.writes == 0);
+    d.fail_read = false; d.fail_write = true;
+    assert(!charger_display::set_backlight(d, false) && d.rails == 0x4f);
+    d.fail_write = false; assert(charger_display::set_backlight(d, false) && d.rails == 0x4b);
+    d.writes = 0; d.corrupt_readback = true; assert(!charger_display::set_backlight(d, true));
+    d.corrupt_readback = false; assert(charger_display::set_backlight(d, true));
+  }
+
   for (bool upper : {false, true}) {
     Pure f; f.state.current = upper ? 9.9f : 1.1f;
     f.press(true); f.press(true, true); assert(f.mode() == UiMode::EDIT);

@@ -12,6 +12,10 @@ class ButtonsController {
   using Request = std::function<uint32_t(EventType, float, float)>;
   void set_requester(Request request) { request_ = std::move(request); }
   void edge(bool button_a, bool down, uint32_t sequence, uint32_t now, const Snapshot &state) {
+    last_backlight_activity_ = now;
+    backlight_activity_seen_ = true;
+    const bool waking = down && !backlight_on_;
+    if (waking) { backlight_on_ = true; mode_ = UiMode::VIEW; changed_ = true; }
     last_activity_ = now;
     activity_seen_ = true;
     if (sequence_seen_ && sequence != last_sequence_ + 1) {
@@ -30,7 +34,7 @@ class ButtonsController {
       if (held) { chord_ = true; return; }
       held = true;
       started = now;
-      if (mode_ == UiMode::METER) {
+      if (mode_ == UiMode::METER || waking) {
         mode_ = UiMode::VIEW;
         chord_ = true;  // Consume the entire wake gesture, including a long hold/chord.
         feedback_(UiNotice::NONE, "Meter closed");
@@ -59,6 +63,7 @@ class ButtonsController {
 
   void tick(uint32_t now, const Snapshot &state) {
     const bool was_home = mode_ == UiMode::VIEW;
+    const bool was_idle = was_home || mode_ == UiMode::METER;
     if (mode_ == UiMode::HELP) {
       if (!display_alive_(state, now))
         cancel_(UiNotice::DISPLAY_UNAVAILABLE, "Display unavailable; help closed", Result::INFO);
@@ -84,6 +89,18 @@ class ButtonsController {
       mode_ = UiMode::METER;
       feedback_(UiNotice::NONE, "Idle meter");
     }
+    // This timer spans both Home and Meter. Heartbeats and telemetry never
+    // restart it; a held button, editing/help, or a pending operation does.
+    const bool can_dim = was_idle && (mode_ == UiMode::VIEW || mode_ == UiMode::METER) &&
+        !held_a_ && !held_b_ && !pending_id_ && !state.busy && display_alive_(state, now);
+    if (!backlight_activity_seen_ || !can_dim) {
+      last_backlight_activity_ = now;
+      backlight_activity_seen_ = true;
+      if (!backlight_on_) { backlight_on_ = true; changed_ = true; }
+    } else if (backlight_on_ && uint32_t(now - last_backlight_activity_) >= 300000) {
+      backlight_on_ = false;
+      changed_ = true;
+    }
     update_hold_(now, state);
   }
 
@@ -96,7 +113,7 @@ class ButtonsController {
         event.result != Result::INFO && event.result != Result::ACCEPTED) {
       pending_id_ = 0;
       mode_ = UiMode::VIEW;
-      last_activity_ = now;
+      last_activity_ = last_backlight_activity_ = now;
       const UiNotice notice = pending_kind_ == RequestKind::CONNECT ?
           (event.result == Result::VERIFIED ? UiNotice::CONNECTED : UiNotice::CONNECT_FAILED) :
           event.result == Result::VERIFIED ?
@@ -111,6 +128,7 @@ class ButtonsController {
   Event ui_event() const {
     Event event{}; event.type = EventType::UI_STATE;
     event.source = "buttons";
+    event.ui_backlight_on = backlight_on_;
     event.ui_mode = mode_;
     event.ui_field = field_;
     event.ui_notice = notice_;
@@ -259,6 +277,8 @@ class ButtonsController {
   uint32_t last_action_{0}, started_a_{0}, started_b_{0}, last_sequence_{0};
   uint32_t pending_id_{0}, last_request_id_{0};
   RequestKind pending_kind_{RequestKind::READ};
+  uint32_t last_backlight_activity_{0};
+  bool backlight_activity_seen_{false}, backlight_on_{true};
   uint32_t last_activity_{0};
   bool activity_seen_{false};
   uint32_t display_seen_at_{0};

@@ -60,6 +60,7 @@ struct Event {
   UiField ui_field{UiField::VOLTAGE};
   bool ui_display_ready{false};
   bool ui_buttons_ready{false};
+  bool ui_backlight_on{true};
   Result result{Result::INFO};
   std::string message;
   std::string source;
@@ -81,6 +82,7 @@ struct Snapshot {
   bool telemetry_inferred{false};
   bool ui_display_ready{false};
   bool ui_buttons_ready{false};
+  bool ui_backlight_on{true};
   float battery_voltage{NAN};
   float battery_charge_ma{NAN};
   float battery_discharge_ma{NAN};
@@ -282,6 +284,7 @@ class EventCore {
         this->snapshot_.ui_buttons_ready = event.ui_buttons_ready;
         break;
       case EventType::UI_STATE:
+        this->snapshot_.ui_backlight_on = event.ui_backlight_on;
         this->snapshot_.ui_mode = event.ui_mode;
         this->snapshot_.ui_notice = event.ui_notice;
         this->snapshot_.ui_hold = event.ui_hold;

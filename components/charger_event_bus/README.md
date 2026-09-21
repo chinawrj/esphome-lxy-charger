@@ -157,3 +157,5 @@ The snapshot stores a dedicated RX timestamp and signed `battery_current_ma`
 battery sample. Absent battery and failed sampling remain distinguishable;
 `battery_fresh(now)` expires after 6 seconds and does not depend on BLE connection.
 This event cannot change BLE setpoints, link/readiness/busy or transaction IDs.
+
+`UI_STATE.ui_backlight_on` defaults to true and carries the Button module's idle-light request. It updates only the UI snapshot, never BLE readiness or charger configuration. LCD owns the hardware operation; no Button-to-LCD object call is introduced.

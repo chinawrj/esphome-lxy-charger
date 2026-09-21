@@ -98,3 +98,7 @@ The optional board-battery event adds a home footer with voltage and signed mA
 prompts. Unavailable/stale and absent battery are distinct. The W/V/A meter and
 edit/confirm/help pages retain their existing purpose. Without Battery, the
 original button hint remains; neither battery data nor BLE updates reset idle.
+
+## Backlight control
+
+The LCD consumes `UI_STATE.ui_backlight_on` from the snapshot and owns the original Plus AXP192 backlight rail. It changes only register `0x12` bit 2 (LDO2), preserving all other rails, and verifies readback before recording success. Failed operations retry on the next render. LCD logic remains powered and the renderer keeps publishing heartbeats while dark. Button absence/unavailability forces the backlight on. The rail assignment follows [M5Stack's original Plus implementation](https://github.com/m5stack/M5StickC-Plus/blob/master/src/AXP192.cpp).

@@ -103,6 +103,13 @@ display:
         event.ui_display_ready = display_ready;
         id(charger_bus).publish(event);
       }
+      static bool backlight_on = true;
+      const bool requested = backlight_requested(id(charger_bus).snapshot());
+      if (display_ready && requested != backlight_on &&
+          set_backlight(*id(m5stick_axp192), requested)) {
+        backlight_on = requested;
+        ESP_LOGI("m5stick_backlight", "Backlight %s; AXP192 LDO2 verified", requested ? "on" : "off");
+      }
       const auto view = make_view(id(charger_bus).snapshot(), millis());
       it.fill(Color::BLACK);
       for (size_t i = 0; i < view.count; ++i) {

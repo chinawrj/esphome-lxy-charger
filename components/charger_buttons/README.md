@@ -75,3 +75,7 @@ consumed through release, including long presses. The next separate press uses
 normal home controls. Other pages and pending requests reset the home idle
 interval; time comparisons support uint32 rollover. No LCD means no meter;
 without this Button module the LCD remains on VIEW.
+
+## Five-minute backlight idle
+
+An independent 300000 ms timer spans Home and Meter. Only button activity or an active local interaction/transaction restarts it; telemetry and LCD heartbeats do not. `UI_STATE.ui_backlight_on` carries the request through the bus. Any button-down wakes Home and consumes the full gesture, including long holds and chords. Missing input edges do not become commands. No LCD heartbeat keeps the request on; the LCD adapter keeps it on when Button is absent/unavailable.
