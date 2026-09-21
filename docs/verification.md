@@ -12,7 +12,9 @@ The operator deferred live-current decoding until a later battery test, declined
 - The [current Web screenshot](images/web-ui.png) shows the running decoder, **58.9 V**, current **NA**, and separate **58.4 V / 5.1 A** setpoints. A GET-only local proxy preserved the original device HTML and live SSE values; only the diagnostics area was cropped. The eight LCD images are shared-view-model renders, not hardware photographs or calibration evidence. All text bounds and bundled glyph checks passed.
 - The voltage mapping remains provisional (`84` DATA[3:5], big-endian / 10), clearly indicated on LCD and Web. [Protocol evidence and limits](protocol.md) distinguish captured facts from inference. Current, temperature, output-switch decoding, wider setpoint ranges and absolute electrical accuracy remain outside this release's verified scope.
 
-The previously completed GitHub run [35583676928](https://github.com/chinawrj/esphome-lxy-charger/actions/runs/35583676928) passed 18/18 jobs for **5138d93**, the preceding UE checkpoint. It is not evidence for this newer voltage decoder; the new revision's CI is recorded separately when complete.
+Independent Linux CI passed **18/18 jobs** for voltage-decoder commit `631829806a7e352373669b56177849ef8cf7397e`: native tests and YAML validation, all sixteen module firmware combinations, and ATOMS3U compilation. [GitHub Actions run 35585830385](https://github.com/chinawrj/esphome-lxy-charger/actions/runs/35585830385). The subsequent release-verification documentation commit does not change that tested code.
+
+The earlier run [35583676928](https://github.com/chinawrj/esphome-lxy-charger/actions/runs/35583676928) passed 18/18 jobs for **5138d93**, the preceding UE checkpoint. It is retained only as historical evidence.
 
 ---
 
