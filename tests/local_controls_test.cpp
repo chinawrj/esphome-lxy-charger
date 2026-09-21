@@ -86,6 +86,21 @@ struct Wrapper {
 };
 
 int main() {
+  for (bool upper : {false, true}) {
+    Pure f; f.state.voltage = upper ? 92.9f : 50.1f;
+    f.press(true, true); assert(f.mode() == UiMode::EDIT);
+    f.press(!upper); assert(f.controller.ui_event().voltage == (upper ? 93.0f : 50.0f));
+    f.press(!upper); assert(f.controller.ui_event().ui_notice == UiNotice::LIMIT);
+    assert(f.controller.ui_event().voltage == (upper ? 93.0f : 50.0f) && f.requests.empty());
+    f.press(true, true); assert(f.mode() == UiMode::CONFIRM && f.requests.empty());
+    f.press(true, true); assert(f.requests.size() == 1);
+    assert(f.requests[0].voltage == (upper ? 93.0f : 50.0f) && f.requests[0].current == 5.1f);
+  }
+  for (float value : {49.9f, 93.1f, 50.05f}) {
+    Pure f; f.state.voltage = value; f.press(true, true);
+    assert(f.mode() == UiMode::VIEW && f.requests.empty());
+  }
+
 
   { // Only idle HOME enters the meter; display heartbeats/telemetry do not reset idle.
     Pure f;

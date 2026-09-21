@@ -89,6 +89,24 @@ struct Fixture {
 };
 
 int main() {
+  // Every permitted tenth, including the two-byte endpoints, traverses real BLE
+  // validation, one write, matching echo and independent readback on a fake link.
+  for (uint16_t raw = 500; raw <= 930; ++raw) {
+    Fixture f;
+    const auto id = f.request(EventType::REQUEST_APPLY_CONFIG, raw / 10.0f, 5.1f);
+    assert(f.result(id, Result::ACCEPTED));
+    assert(f.commands() == std::vector<uint8_t>{3});
+    assert(native_writes[0][5] == (raw >> 8) && native_writes[0][6] == (raw & 255));
+    f.config(raw, 51, 0x83); f.tick(100); f.config(raw, 51);
+    assert(f.result(id, Result::VERIFIED));
+    assert((f.commands() == std::vector<uint8_t>{3, 2}));
+    assert(f.bus.snapshot().voltage == raw / 10.0f);
+  }
+  for (float value : {49.9f, 93.1f, 50.05f, 92.95f, NAN, INFINITY}) {
+    Fixture f; const auto id = f.request(EventType::REQUEST_APPLY_CONFIG, value, 5.1f);
+    assert(f.result(id, Result::REJECTED) && native_writes.empty());
+  }
+
   { // Independent captured restart fixtures: output differs from 58.4 V setpoint.
     Fixture f;
     for (const auto raw : {0u, 1u, 259u, 587u, 588u, 589u, 590u}) {

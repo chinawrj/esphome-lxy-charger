@@ -7,8 +7,8 @@ static const char *const TAG = "lxy_charger";
 static constexpr uint32_t RESPONSE_TIMEOUT_MS = 5000;
 static constexpr uint32_t CONNECTION_REQUEST_TIMEOUT_MS = 30000;
 static constexpr uint32_t STATUS_INTERVAL_MS = 2000;
-static constexpr uint16_t MIN_VOLTAGE = 582;
-static constexpr uint16_t MAX_VOLTAGE = 584;
+static constexpr uint16_t MIN_VOLTAGE = 500;
+static constexpr uint16_t MAX_VOLTAGE = 930;
 static constexpr uint16_t MIN_CURRENT = 49;
 static constexpr uint16_t MAX_CURRENT = 51;
 
@@ -32,7 +32,7 @@ void LXYCharger::setup() {
 
 void LXYCharger::dump_config() {
   ESP_LOGCONFIG(TAG, "LXY BLE service %s: FFF0 / notify FFF1 / write FFF2", this->parent()->address_str());
-  ESP_LOGCONFIG(TAG, "Event requests only; captured limits 58.2..58.4 V / 4.9..5.1 A");
+  ESP_LOGCONFIG(TAG, "Event requests only; configured limits 50.0..93.0 V / 4.9..5.1 A");
 }
 
 bool LXYCharger::ready_() const {
@@ -264,7 +264,7 @@ bool LXYCharger::apply_settings_(float voltage_value, float current_value, uint3
   uint16_t voltage, current;
   if (!to_tenths_(voltage_value, voltage) || !to_tenths_(current_value, current) ||
       voltage < MIN_VOLTAGE || voltage > MAX_VOLTAGE || current < MIN_CURRENT || current > MAX_CURRENT) {
-    this->publish_status_("Apply rejected: use 0.1 steps within captured limits", Result::REJECTED, request_id);
+    this->publish_status_("Apply rejected: use 0.1 steps within configured limits", Result::REJECTED, request_id);
     return false;
   }
   // Snapshot the EVENT payload. No UI state is referenced, restored or stored.

@@ -141,7 +141,7 @@ class ButtonsController {
     const float scaled = value * 10.0f;
     const float rounded = std::round(scaled);
     return std::fabs(scaled - rounded) < 0.001f &&
-        (voltage ? rounded >= 582 && rounded <= 584 : rounded >= 49 && rounded <= 51);
+        (voltage ? rounded >= 500 && rounded <= 930 : rounded >= 49 && rounded <= 51);
   }
   void set_hold_(UiHold hold) {
     if (hold_ != hold) { hold_ = hold; changed_ = true; }
@@ -241,10 +241,10 @@ class ButtonsController {
     }
     if (mode_ == UiMode::EDIT && !long_press) {
       int &value = field_ == UiField::VOLTAGE ? draft_v_ : draft_a_;
-      const int minimum = field_ == UiField::VOLTAGE ? 582 : 49;
-      const int maximum = field_ == UiField::VOLTAGE ? 584 : 51;
+      const int minimum = field_ == UiField::VOLTAGE ? 500 : 49;
+      const int maximum = field_ == UiField::VOLTAGE ? 930 : 51;
       const int next = value + (a ? -1 : 1);
-      if (next < minimum || next > maximum) feedback_(UiNotice::LIMIT, "Captured limit reached", Result::REJECTED);
+      if (next < minimum || next > maximum) feedback_(UiNotice::LIMIT, "Configured limit reached", Result::REJECTED);
       else { value = next; feedback_(UiNotice::EDITING, "Draft only; hold A to review"); }
     }
   }

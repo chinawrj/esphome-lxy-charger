@@ -49,7 +49,7 @@ async def to_code(config):
         child = await binary_sensor.new_binary_sensor(config["telemetry_valid"])
         cg.add(var.set_telemetry_valid(child))
     for key, voltage, minimum, maximum in (
-        ("requested_voltage", True, 58.2, 58.4),
+        ("requested_voltage", True, 50.0, 93.0),
         ("requested_current", False, 4.9, 5.1),
     ):
         child = await number.new_number(config[key], var, voltage, min_value=minimum, max_value=maximum, step=0.1)

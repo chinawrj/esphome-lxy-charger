@@ -65,7 +65,7 @@ bool ChargerWeb::valid_(float value, bool voltage) {
   const float scaled = value * 10.0f;
   const float rounded = std::round(scaled);
   return std::fabs(scaled - rounded) <= 0.001f &&
-      (voltage ? (rounded >= 582 && rounded <= 584) : (rounded >= 49 && rounded <= 51));
+      (voltage ? (rounded >= 500 && rounded <= 930) : (rounded >= 49 && rounded <= 51));
 }
 
 void ChargerWeb::status_(const char *message, Result result) {
@@ -87,7 +87,7 @@ bool ChargerWeb::stage(bool voltage, float value) {
     return false;
   }
   if (!valid_(value, voltage)) {
-    status_("Rejected: use 0.1 steps within the captured limits", Result::REJECTED);
+    status_("Rejected: use 0.1 steps within the configured limits", Result::REJECTED);
     return false;
   }
   value = std::round(value * 10.0f) / 10.0f;

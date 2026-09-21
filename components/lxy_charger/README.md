@@ -32,7 +32,7 @@ There are no automatic setting writes on boot or reconnect and no automatic sett
 
 ## Verified range and wire protocol
 
-C++ validates finite values, 0.1 increments and the captured envelope: 58.2–58.4 V and 4.9–5.1 A. This is a test envelope, not a statement about battery safety or broader charger limits. UI adapters may expose the same bounds but cannot bypass BLE-side validation.
+C++ validates finite values, 0.1 increments and configured bounds: 50.0–93.0 V and 4.9–5.1 A. Voltage follows the operator-reported charger nameplate; current retains the captured test envelope. Native fake-transport tests exercise all 431 voltage settings, including matching echo/readback and rejection outside the bounds. Physical extended-range operation has not been tested. UI adapters expose the same bounds but cannot bypass BLE-side validation.
 
 Frames remain 5E5E | L | CMD | DATA | XOR, with L = total length - 3 and XOR over L through the final data byte. Setter 03 carries 01 plus big-endian u16 voltage/current multiplied by 10. No output-enable/disable, binding, authentication or guessed calibration command is implemented.
 

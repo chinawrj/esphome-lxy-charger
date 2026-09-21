@@ -51,7 +51,7 @@ inline const char *notice_text(charger_event_bus::UiNotice notice) {
     case UiNotice::REFRESHED: return "参数已刷新";
     case UiNotice::CANCELLED: return "已取消，未发送";
     case UiNotice::UNCHANGED: return "设置未改变，未发送";
-    case UiNotice::LIMIT: return "已达验证范围边界";
+    case UiNotice::LIMIT: return "已达设置范围边界";
     case UiNotice::DISPLAY_UNAVAILABLE: return "显示不可用，已取消";
     case UiNotice::NOT_READY: return "设备尚未就绪，请稍候";
     case UiNotice::BUSY: return "正在处理，请稍候";

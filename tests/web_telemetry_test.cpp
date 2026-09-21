@@ -254,6 +254,19 @@ void test_inferred_voltage_only_optional_entities() {
 }
 
 int main() {
+  { // Staging the nameplate voltage range never applies it automatically.
+    Fixture f; f.connect(); f.config(); unsigned requests = 0;
+    assert(f.bus.subscribe([&](const Event &e) { if (EventCore::is_request(e.type)) ++requests; }));
+    for (int raw = 500; raw <= 930; ++raw) {
+      assert(f.web.stage(true, raw / 10.0f)); f.drain();
+      assert(f.requested_v.state == raw / 10.0f && f.configured_v.state == 58.4f);
+    }
+    for (float value : {49.9f, 93.1f, 50.05f, 92.95f, NAN, INFINITY})
+      assert(!f.web.stage(true, value));
+    assert(!f.web.stage(false, 4.8f) && !f.web.stage(false, 5.2f));
+    f.drain(); assert(requests == 0);
+  }
+
   test_inferred_voltage_only_optional_entities();
   test_boot_and_config_are_not_measurements();
   test_real_publication_stale_and_recovery();

@@ -103,7 +103,7 @@ Page assets are stored on the device and do not require an external CDN. Home As
 | `BLE connection` | Manage the Bluetooth connection; does not switch charging output |
 | `Command status` | Request acceptance, readback verification, rejection, or an uncertain result |
 
-The allowed settings are **58.2–58.4 V and 4.9–5.1 A**, in **0.1** steps. These limits cover the protocol samples tested so far; they are not a statement of suitability for a particular battery.
+The allowed settings are **50.0–93.0 V and 4.9–5.1 A**, in **0.1** steps. The voltage range follows the operator-reported charger nameplate (50–93 V); current retains the captured test range. Encoding, validation and simulated echo/readback are tested across all 431 voltage steps. Physical setting/readback tests so far cover 58.2–58.4 V only. Changing the allowed range does not apply a new setting.
 
 ### LCD
 
@@ -140,7 +140,7 @@ While a connection or operation is pending, repeated presses do not submit anoth
 
 Editing and Help require a usable LCD. Without one, the Button package can select a field, connect, and request read-only refreshes, but cannot edit settings or submit Apply. Entering Edit and opening Confirm do not send settings. The confirmation screen shows both draft values and the original readback.
 
-Drafts remain within **58.2–58.4 V / 4.9–5.1 A**, in **0.1** steps. Editing is cancelled after **30 seconds** without input, on disconnection, when another operation makes the charger busy, when the baseline configuration changes, or when the LCD becomes unavailable. Cancelled drafts are not submitted or replayed later.
+Drafts remain within **50.0–93.0 V / 4.9–5.1 A**, in **0.1** steps. Editing is cancelled after **30 seconds** without input, on disconnection, when another operation makes the charger busy, when the baseline configuration changes, or when the LCD becomes unavailable. Cancelled drafts are not submitted or replayed later.
 
 Local feedback distinguishes **parameters refreshed**, **settings confirmed**, and **cancelled without sending**. A result that cannot be confirmed is labelled **“结果未确认，未重发”** (result unconfirmed; not resent). Ordinary notices appear for 3 seconds; failure, unknown-result, and connection-failure notices remain for 6 seconds. They expire automatically and do not change the LED's meaning. Button operations use events and never call the BLE service directly.
 
