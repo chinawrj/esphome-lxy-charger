@@ -19,5 +19,10 @@ void ChargerIndicator::loop() {
     level_ = next;
     output_->set_state(next);
   }
+  const bool suspended = controller_.suspended(bus_->snapshot());
+  if (suspended != idle_suspended_) {
+    idle_suspended_ = suspended;
+    ESP_LOGI("charger_indicator", "%s", suspended ? "Idle LED off (zero duty)" : "BLE LED indication resumed");
+  }
 }
 }

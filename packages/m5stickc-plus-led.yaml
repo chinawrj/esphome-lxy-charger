@@ -3,7 +3,8 @@
 # https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/669/k016-p-StickC-Plus-sche.pdf
 # Fixed red LED: steady=actual BLE link, slow blink=connecting, off=disabled.
 # Limit the on-state to 10% PWM duty to make the indicator less bright.
-# Reads only event-bus connection snapshots; no other module IDs or result codes.
+# Five-minute UI idle forces zero duty; wake restores the BLE pattern.
+# Reads only event-bus connection/UI snapshots; no other module object references.
 output:
   - platform: ledc
     id: m5stick_connection_led

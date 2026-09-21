@@ -145,7 +145,7 @@ Drafts remain within **50.0–93.0 V / 1.0–10.0 A**, in **0.1** steps. Editing
 
 Local feedback distinguishes **parameters refreshed**, **settings confirmed**, and **cancelled without sending**. A result that cannot be confirmed is labelled **“结果未确认，未重发”** (result unconfirmed; not resent). Ordinary notices appear for 3 seconds; failure, unknown-result, and connection-failure notices remain for 6 seconds. They expire automatically and do not change the LED's meaning. Button operations use events and never call the BLE service directly.
 
-After **5 minutes without button activity**, the Home/Meter backlight turns off. Press A or B to restore the backlight and return Home; the entire wake gesture is consumed. BLE, Wi-Fi, battery sampling and display heartbeats continue. Editing, Help, held keys and pending operations keep it lit. Builds without Button keep the backlight on.
+After **5 minutes without button activity**, the Home/Meter backlight and status LED turn off (LED at zero duty, without idle pulses). Press A or B to restore the backlight, resume the BLE LED pattern and return Home; the entire wake gesture is consumed. BLE, Wi-Fi, battery sampling and display heartbeats continue. Editing, Help, held keys and pending operations keep it lit. Builds without Button keep the backlight on.
 
 ### M5Stick internal battery
 
@@ -184,7 +184,7 @@ The M5StickC Plus indicator uses 1 kHz PWM capped at **10% duty** for a dimmer l
 | Slow flash: 500 ms on / 500 ms off | Searching, connecting, or reconnecting |
 | Off | No link and connection attempts are disabled |
 
-Remember **steady = connected, flashing = connecting, off = disconnected**. Missing output decoding, stale readings, busy operations, and command results do not replace this pattern. Read the screen or Web status for those details. Long-press B in the normal view to see this explanation on the device.
+While awake, **steady = connected, flashing = connecting, off = disconnected**. During five-minute display idle, the LED is intentionally off even if BLE remains connected. Missing output decoding, stale readings, busy operations, and command results do not replace this pattern. Read the screen or Web status for those details. Long-press B in the normal view to see this explanation on the device.
 
 ## How settings are confirmed
 

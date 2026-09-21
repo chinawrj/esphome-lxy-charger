@@ -465,7 +465,29 @@ int main() {
     f.buttons.loop(); f.drain(); f.buttons.loop(); f.drain();
     assert(f.bus.snapshot().ui_mode == UiMode::VIEW && f.requests.empty());
   }
-  { // LED has only link semantics, independent of operations, telemetry and results.
+  { // Shared idle event suppresses all LED phases; wake restores the live link pattern.
+    Wrapper f; f.ready(); f.heartbeat(); f.indicator.loop(); assert(f.led.state);
+    fake_millis = 300000; f.heartbeat(); f.buttons.loop(); f.drain(); f.indicator.loop();
+    assert(!f.led.state && !f.bus.snapshot().ui_backlight_on);
+    const unsigned writes = f.led.writes;
+    for (uint32_t delta : {100u, 499u, 500u, 999u, 1000u}) {
+      fake_millis = 300000 + delta; f.heartbeat(); f.buttons.loop(); f.drain(); f.indicator.loop();
+      assert(!f.led.state && f.led.writes == writes && f.requests.empty());
+    }
+    f.press(false, true); f.indicator.loop(); assert(f.led.state && f.requests.empty());
+    Snapshot s; s.ui_buttons_ready = true; s.ui_backlight_on = false;
+    charger_indicator::IndicatorController led;
+    for (bool connected : {false, true}) for (bool enabled : {false, true}) {
+      s.connected = connected; s.connection_enabled = enabled;
+      for (uint32_t t : {0u, 499u, 500u, 999u, UINT32_MAX}) assert(!led.level(s,t));
+      s.ui_backlight_on = true;
+      assert(led.level(s,250) == (connected || enabled)); assert(led.level(s,750) == connected);
+      s.ui_backlight_on = false; s.ui_buttons_ready = false;
+      assert(led.level(s,250) == (connected || enabled)); // No wake source: don't suppress.
+      s.ui_buttons_ready = true;
+    }
+  }
+  { // Awake LED has only link semantics, independent of operations, telemetry and results.
     charger_indicator::IndicatorController led;
     Snapshot state;
     assert(!led.level(state, 0) && !led.level(state, 500));

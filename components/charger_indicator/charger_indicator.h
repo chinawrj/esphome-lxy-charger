@@ -16,5 +16,6 @@ class ChargerIndicator : public Component {
   output::BinaryOutput *output_{nullptr};
   IndicatorController controller_;
   bool level_{false};
+  bool idle_suspended_{false};
 };
 }
