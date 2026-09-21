@@ -1,0 +1,120 @@
+# Original M5StickC Plus (AXP192), including the user's v1.1; not Plus2.
+# Hardware: https://docs.m5stack.com/en/core/m5stickc_plus
+# LCD rails: https://github.com/m5stack/M5StickC-Plus/blob/master/src/AXP192.cpp
+# Panel offsets: https://github.com/m5stack/M5GFX/blob/master/src/M5GFX.cpp
+# Include from a YAML in the project root so assets/Roboto.ttf resolves there.
+# Optional LCD module: its only application dependency is charger_bus.snapshot().
+# Button, LED and web packages may each be omitted independently.
+
+esphome:
+  on_boot:
+    # I2C BUS priority is 1000; display setup uses the default DATA priority (600).
+    - priority: 850
+      then:
+        - lambda: |-
+            uint8_t rails = 0;
+            if (!id(m5stick_axp192).read_byte(0x12, &rails)) {
+              ESP_LOGE("m5stick_power", "AXP192 not responding; LCD power was not changed");
+              return;
+            }
+            // M5Stack's original Plus initialization uses 0xCC: LDO2/LDO3 = 3.0 V.
+            // Enable only LCD backlight (bit 2) and LCD logic (bit 3), preserving
+            // the MCU and other rails. Leave battery-charge registers untouched.
+            if (!id(m5stick_axp192).write_byte(0x28, 0xCC) ||
+                !id(m5stick_axp192).write_byte(0x12, rails | 0x0C)) {
+              ESP_LOGE("m5stick_power", "AXP192 LCD power initialization failed");
+              return;
+            }
+            delay(10);
+
+i2c:
+  - id: m5stick_internal_i2c
+    sda: GPIO21
+    scl: GPIO22
+    frequency: 100kHz
+    scan: false
+
+i2c_device:
+  - id: m5stick_axp192
+    i2c_id: m5stick_internal_i2c
+    address: 0x34
+
+spi:
+  - id: m5stick_lcd_spi
+    clk_pin: GPIO13
+    mosi_pin: GPIO15
+
+font:
+  - file: assets/Roboto.ttf
+    id: m5stick_font_small
+    size: 11
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
+  - file: assets/Roboto.ttf
+    id: m5stick_font_title
+    size: 14
+    glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
+  - file: assets/Roboto.ttf
+    id: m5stick_font_value
+    size: 28
+    glyphs: ' -.0123456789AV'
+
+display:
+  - platform: mipi_spi
+    id: m5stick_lcd
+    model: ST7789V
+    spi_id: m5stick_lcd_spi
+    cs_pin: GPIO5
+    dc_pin: GPIO23
+    reset_pin: GPIO18
+    dimensions:
+      width: 135
+      height: 240
+      offset_width: 52
+      offset_height: 40
+      pad_width: 53
+      pad_height: 40
+    rotation: 270
+    invert_colors: true
+    # Matches M5GFX Panel_M5StickCPlus: rgb_order=false selects MAD_BGR (0x08).
+    color_order: BGR
+    color_depth: 16
+    buffer_size: 25%
+    data_rate: 10MHz
+    update_interval: 1s
+    lambda: |-
+      const Color white(255, 255, 255);
+      const Color muted(160, 160, 160);
+      const Color green(64, 230, 140);
+      const Color amber(255, 185, 64);
+      const auto &state = id(charger_bus).snapshot();
+      const bool ready = state.ready;
+      const bool values_valid = ready && !std::isnan(state.voltage) &&
+          !std::isnan(state.current);
+      it.fill(Color::BLACK);
+      it.print(8, 4, id(m5stick_font_title), white, "LXY Charger");
+      it.print(232, 5, id(m5stick_font_small), ready ? green : amber,
+               TextAlign::TOP_RIGHT, ready ? "BLE READY" : "BLE WAIT");
+      it.line(8, 25, 232, 25, muted);
+      it.print(8, 31, id(m5stick_font_small), muted, "SET VOLTAGE");
+      it.print(128, 31, id(m5stick_font_small), muted, "SET CURRENT");
+      if (values_valid) {
+        it.printf(8, 45, id(m5stick_font_value), white, "%.1f V", state.voltage);
+        it.printf(128, 45, id(m5stick_font_value), white, "%.1f A", state.current);
+      } else {
+        it.print(8, 45, id(m5stick_font_value), muted, "--.- V");
+        it.print(128, 45, id(m5stick_font_value), muted, "--.- A");
+      }
+      // Status is rendered from the bus; this does not require the web module.
+      const bool problem = state.result == esphome::charger_event_bus::Result::REJECTED ||
+          state.result == esphome::charger_event_bus::Result::FAILED ||
+          state.result == esphome::charger_event_bus::Result::UNKNOWN;
+      it.print(8, 82, id(m5stick_font_small), ready && !problem ? green : amber,
+               ready ? (state.busy ? "Updating settings..." :
+                         (problem ? "Last request not verified" : "Readback setpoints"))
+                     : "Waiting for charger...");
+      if (!state.ip_address.empty()) {
+        it.printf(8, 101, id(m5stick_font_small), white, "IP: %s", state.ip_address.c_str());
+      } else {
+        it.print(8, 101, id(m5stick_font_small), white, "Offline / USB");
+      }
+      it.print(8, 119, id(m5stick_font_small), muted, "Configured values / read only");

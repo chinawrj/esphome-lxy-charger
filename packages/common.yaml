@@ -1,0 +1,38 @@
+# Mandatory BLE service + internal event bus; no optional module dependencies.
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.9.0
+  project:
+    name: local.lxy_charger
+    version: "2.0.0"
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [charger_event_bus, lxy_charger, charger_web]
+
+logger:
+  level: INFO
+  baud_rate: 115200
+
+charger_event_bus:
+  id: charger_bus
+
+esp32_ble:
+  max_connections: 1
+
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+
+ble_client:
+  - id: charger_ble
+    mac_address: !secret charger_mac
+    auto_connect: true
+
+lxy_charger:
+  id: charger
+  ble_client_id: charger_ble
+  event_bus_id: charger_bus

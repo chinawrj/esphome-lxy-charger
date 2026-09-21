@@ -1,0 +1,18 @@
+substitutions:
+  name: lxy-m5stick
+  friendly_name: LXY M5StickC Plus
+  ap_name: LXY M5Stick Setup
+
+packages:
+  common: !include packages/common.yaml
+  web: !include packages/web.yaml
+  lcd: !include packages/m5stickc-plus-display.yaml
+  buttons: !include packages/m5stickc-plus-buttons.yaml
+  led: !include packages/m5stickc-plus-led.yaml
+
+esp32:
+  board: m5stick-c
+  variant: ESP32
+  flash_size: 4MB
+  framework:
+    type: esp-idf

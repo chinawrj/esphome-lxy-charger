@@ -1,0 +1,41 @@
+# Optional button module for original M5StickC Plus (not Plus2).
+# A=GPIO37, B=GPIO39, both externally pulled up and active-low:
+# https://docs.m5stack.com/en/core/m5stickc_plus
+# Depends only on charger_bus. No BLE, LCD, LED or web references.
+binary_sensor:
+  - platform: gpio
+    id: m5stick_button_a
+    internal: true
+    pin:
+      number: GPIO37
+      inverted: true
+      mode: INPUT
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_press:
+      - lambda: |-
+          using esphome::charger_event_bus::EventType;
+          if (id(charger_bus).request(EventType::REQUEST_READ_CONFIG, "button_a") == 0) {
+            ESP_LOGW("m5stick_buttons", "Read request could not be queued");
+          }
+
+  - platform: gpio
+    id: m5stick_button_b
+    internal: true
+    pin:
+      number: GPIO39
+      inverted: true
+      mode: INPUT
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_press:
+      - lambda: |-
+          esphome::charger_event_bus::Event event{};
+          event.type = esphome::charger_event_bus::EventType::INPUT;
+          event.source = "button_b";
+          event.message = "pressed";
+          if (!id(charger_bus).publish(event)) {
+            ESP_LOGW("m5stick_buttons", "Button B event could not be queued");
+          }

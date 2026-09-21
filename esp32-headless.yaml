@@ -1,0 +1,15 @@
+substitutions:
+  name: lxy-esp32
+  friendly_name: LXY ESP32
+  ap_name: LXY ESP32 Setup
+
+packages:
+  common: !include packages/common.yaml
+  web: !include packages/web.yaml
+
+esp32:
+  board: esp32dev
+  variant: ESP32
+  flash_size: 4MB
+  framework:
+    type: esp-idf

@@ -1,0 +1,18 @@
+substitutions:
+  name: lxy-atoms3u
+  friendly_name: LXY ATOMS3U
+  ap_name: LXY ATOMS3U Setup
+
+packages:
+  common: !include packages/common.yaml
+  web: !include packages/web.yaml
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG

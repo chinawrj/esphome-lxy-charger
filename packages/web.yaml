@@ -1,0 +1,93 @@
+# Optional standalone web/network adapter; no Home Assistant server.
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+    - ssid: !secret wifi_ssid_backup1
+      password: !secret wifi_password_backup1
+  on_disconnect:
+    - lambda: |-
+        esphome::charger_event_bus::Event event{esphome::charger_event_bus::EventType::NETWORK_STATE};
+        event.source = "network";
+        id(charger_bus).publish(event);
+  ap:
+    ssid: ${ap_name}
+    password: !secret fallback_password
+  reboot_timeout: 0s
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  local: true
+  log: false
+  auth:
+    username: !secret web_username
+    password: !secret web_password
+    type: digest
+  ota: false
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+charger_web:
+  id: charger_controls
+  event_bus_id: charger_bus
+  connection_switch:
+    name: "BLE connection"
+    id: charger_connection_enabled
+  configured_voltage:
+    name: "Readback set voltage"
+    id: charger_voltage
+  configured_current:
+    name: "Readback set current"
+    id: charger_current
+  requested_voltage:
+    name: "Target voltage"
+    id: target_voltage
+  requested_current:
+    name: "Target current"
+    id: target_current
+  apply:
+    name: "Apply settings"
+    id: charger_apply
+  refresh:
+    name: "Refresh settings"
+    id: charger_refresh
+  connection:
+    name: "Charger ready"
+    id: charger_ready
+  transaction_status:
+    name: "Command status"
+    id: charger_status
+  raw_status:
+    name: "Raw status frame"
+    id: charger_raw_status
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP address"
+      id: charger_ip
+      entity_category: diagnostic
+      on_value:
+        then:
+          - lambda: |-
+              esphome::charger_event_bus::Event event{esphome::charger_event_bus::EventType::NETWORK_STATE};
+              event.source = "network";
+              event.connected = !x.empty() && x != "0.0.0.0";
+              event.message = x;
+              id(charger_bus).publish(event);
+
+sensor:
+  - platform: wifi_signal
+    name: "Wi-Fi signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic

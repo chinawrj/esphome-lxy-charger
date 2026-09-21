@@ -1,0 +1,26 @@
+# Optional LED module for original M5StickC Plus (not Plus2).
+# Official schematic: LED2 anode=VESP_3V3, cathode=GPIO10, so LOW is on.
+# https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/669/k016-p-StickC-Plus-sche.pdf
+# The only application input is the event bus CONNECTION event.
+# Solid on means protocol ready; off means disconnected or still initializing.
+output:
+  - platform: gpio
+    id: m5stick_connection_led
+    pin:
+      number: GPIO10
+      inverted: true
+
+charger_event_bus:
+  id: charger_bus
+  on_event:
+    - then:
+        - lambda: |-
+            if (event.type != esphome::charger_event_bus::EventType::CONNECTION) {
+              return;
+            }
+            // The bus reduces CONNECTION before notifying observers.
+            if (id(charger_bus).snapshot().ready) {
+              id(m5stick_connection_led).turn_on();
+            } else {
+              id(m5stick_connection_led).turn_off();
+            }

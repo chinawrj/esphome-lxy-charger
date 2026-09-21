@@ -1,0 +1,14 @@
+substitutions:
+  name: lxy-minimal
+  friendly_name: LXY Minimal
+  ap_name: LXY Minimal Setup
+
+packages:
+  common: !include packages/common.yaml
+
+esp32:
+  board: esp32dev
+  variant: ESP32
+  flash_size: 4MB
+  framework:
+    type: esp-idf
